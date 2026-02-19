@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
 
-function SkeletonBox({ width, height = 16 }: { width: string | number; height?: number }) {
+function SkeletonBox({ width, height = 16 }: { width: number; height?: number }) {
   const shimmer = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
