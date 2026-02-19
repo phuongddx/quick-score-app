@@ -1,11 +1,12 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Search } from 'lucide-react-native';
+import { Search, CalendarDays } from 'lucide-react-native';
 
 interface TitleBarProps {
   onSearchPress?: () => void;
+  onCalendarPress?: () => void;
 }
 
-export function TitleBar({ onSearchPress }: TitleBarProps) {
+export function TitleBar({ onSearchPress, onCalendarPress }: TitleBarProps) {
   return (
     <View style={styles.container}>
       {/* Brand: icon + wordmark */}
@@ -18,16 +19,28 @@ export function TitleBar({ onSearchPress }: TitleBarProps) {
       </View>
 
       {/* Actions */}
-      <TouchableOpacity
-        onPress={onSearchPress}
-        activeOpacity={0.7}
-        style={styles.iconBtn}
-        accessibilityLabel="Search"
-        accessibilityRole="button"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Search size={20} color="#8B949E" />
-      </TouchableOpacity>
+      <View style={styles.actions}>
+        <TouchableOpacity
+          onPress={onCalendarPress}
+          activeOpacity={0.7}
+          style={styles.iconBtn}
+          accessibilityLabel="Open calendar"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <CalendarDays size={20} color="#8B949E" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onSearchPress}
+          activeOpacity={0.7}
+          style={styles.iconBtn}
+          accessibilityLabel="Search"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Search size={20} color="#8B949E" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -73,6 +86,11 @@ const styles = {
     fontWeight: '700' as const,
     color: '#F97316',
     letterSpacing: -0.5,
+  },
+  actions: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
   },
   iconBtn: {
     width: 44,

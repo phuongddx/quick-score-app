@@ -12,6 +12,7 @@ import { DateFilterStrip } from '@/components/date-filter-strip';
 import { LoadingSkeleton } from '@/components/loading-skeleton';
 import { EmptyState } from '@/components/empty-state';
 import { TitleBar } from '@/components/title-bar';
+import { CalendarPickerModal } from '@/components/calendar-picker-modal';
 
 interface Section {
   title: string;
@@ -34,6 +35,7 @@ export default function ScoresScreen() {
   const { selectedDate, setDate } = useFiltersStore();
   const { data: matches, isPending } = useMatchesByDate(selectedDate);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [calendarVisible, setCalendarVisible] = useState(false);
 
   const toggleSection = useCallback((leagueId: string) => {
     setCollapsed((prev) => {
@@ -47,8 +49,17 @@ export default function ScoresScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D1117' }} edges={['top']}>
-      <TitleBar onSearchPress={() => router.push('/search' as never)} />
+      <TitleBar
+        onSearchPress={() => router.push('/search' as never)}
+        onCalendarPress={() => setCalendarVisible(true)}
+      />
       <DateFilterStrip selectedDate={selectedDate} onDateChange={setDate} />
+      <CalendarPickerModal
+        visible={calendarVisible}
+        selectedDate={selectedDate}
+        onDateSelect={setDate}
+        onClose={() => setCalendarVisible(false)}
+      />
 
       {isPending ? (
         <LoadingSkeleton count={8} />
