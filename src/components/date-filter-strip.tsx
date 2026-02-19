@@ -1,11 +1,17 @@
 import React, { useRef, useEffect } from 'react';
-import { ScrollView, TouchableOpacity, View, Text } from 'react-native';
+import { ScrollView, TouchableOpacity, Text } from 'react-native';
 
 interface Props {
   selectedDate: string; // ISO date "2026-02-19"
   onDateChange: (date: string) => void;
   daysRange?: number; // days before + after today (default 3)
 }
+
+// Two-letter weekday abbreviations indexed by getDay() (0=Sunday)
+const WEEKDAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const;
+const CELL_WIDTH = 52;
+const ACTIVE_COLOR = '#E53935';
+const INACTIVE_COLOR = '#8B949E';
 
 function addDays(base: Date, n: number): Date {
   const d = new Date(base);
@@ -17,12 +23,11 @@ function toISO(d: Date): string {
   return d.toISOString().split('T')[0]!;
 }
 
-function dayLabel(d: Date, today: Date): string {
-  const diff = Math.round((d.getTime() - today.getTime()) / 86_400_000);
-  if (diff === -1) return 'Yesterday';
-  if (diff === 0)  return 'Today';
-  if (diff === 1)  return 'Tomorrow';
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+// "DD.MM." format using UTC to stay consistent with ISO date
+function formatDayMonth(d: Date): string {
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  return `${dd}.${mm}.`;
 }
 
 export function DateFilterStrip({ selectedDate, onDateChange, daysRange = 3 }: Props) {
@@ -37,7 +42,7 @@ export function DateFilterStrip({ selectedDate, onDateChange, daysRange = 3 }: P
   useEffect(() => {
     const idx = days.findIndex((d) => toISO(d) === selectedDate);
     if (idx >= 0 && scrollRef.current) {
-      scrollRef.current.scrollTo({ x: idx * 88, animated: false });
+      scrollRef.current.scrollTo({ x: idx * CELL_WIDTH, animated: false });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -46,27 +51,32 @@ export function DateFilterStrip({ selectedDate, onDateChange, daysRange = 3 }: P
       ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ backgroundColor: '#161B22', maxHeight: 52 }}
+      style={{ backgroundColor: '#161B22' }}
       contentContainerStyle={{ paddingHorizontal: 8 }}
     >
       {days.map((day) => {
         const iso = toISO(day);
         const active = iso === selectedDate;
+        const isCurrentDay = iso === toISO(today);
+        const color = active ? ACTIVE_COLOR : INACTIVE_COLOR;
         return (
           <TouchableOpacity
             key={iso}
             onPress={() => onDateChange(iso)}
             style={{
-              width: 80,
-              marginHorizontal: 4,
-              paddingVertical: 10,
+              width: CELL_WIDTH,
+              paddingVertical: 8,
               alignItems: 'center',
-              borderRadius: 20,
-              backgroundColor: active ? '#2196F3' : 'transparent',
+              // Always reserve space for bottom border to prevent layout shift
+              borderBottomWidth: 3,
+              borderBottomColor: active ? ACTIVE_COLOR : 'transparent',
             }}
           >
-            <Text style={{ color: active ? '#fff' : '#8B949E', fontSize: 12, fontWeight: active ? '700' : '400' }}>
-              {dayLabel(day, today)}
+            <Text style={{ color, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>
+              {isCurrentDay ? 'TODAY' : WEEKDAYS[day.getUTCDay()]}
+            </Text>
+            <Text style={{ color, fontSize: 12, fontWeight: '400', marginTop: 2 }}>
+              {formatDayMonth(day)}
             </Text>
           </TouchableOpacity>
         );
