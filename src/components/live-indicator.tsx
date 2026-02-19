@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, View, Text, AccessibilityInfo } from 'react-native';
 
 interface Props {
@@ -6,7 +6,7 @@ interface Props {
   isHalftime?: boolean;
 }
 
-export const LiveIndicator = React.memo(function LiveIndicator({ minute, isHalftime }: Props) {
+export function LiveIndicator({ minute, isHalftime }: Props) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -40,4 +40,4 @@ export const LiveIndicator = React.memo(function LiveIndicator({ minute, isHalft
       <Text style={{ color: '#00C853', fontSize: 11, fontWeight: '700' }}>{label}</Text>
     </View>
   );
-});
+}

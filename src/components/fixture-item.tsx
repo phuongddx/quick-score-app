@@ -1,4 +1,3 @@
-import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import type { Match } from '../types';
 
@@ -21,7 +20,7 @@ function kickoffLabel(startTime: string): { label: string; isToday: boolean } {
   return { label: `${hh}:${mm}`, isToday };
 }
 
-export const FixtureItem = React.memo(function FixtureItem({
+export function FixtureItem({
   match, onPress, onToggleNotification, notificationEnabled,
 }: Props) {
   const { label, isToday } = kickoffLabel(match.startTime);
@@ -64,4 +63,4 @@ export const FixtureItem = React.memo(function FixtureItem({
       )}
     </TouchableOpacity>
   );
-});
+}

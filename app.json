@@ -27,7 +27,8 @@
       "bundler": "metro"
     },
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": true
     }
   }
 }

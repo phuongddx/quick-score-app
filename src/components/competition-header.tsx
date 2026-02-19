@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { TouchableOpacity, View, Text, Animated } from 'react-native';
 import type { League } from '../types';
 
@@ -9,7 +9,7 @@ interface Props {
   onToggle: () => void;
 }
 
-export const CompetitionHeader = React.memo(function CompetitionHeader({
+export function CompetitionHeader({
   league, liveCount, isExpanded, onToggle,
 }: Props) {
   const chevronAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
@@ -51,4 +51,4 @@ export const CompetitionHeader = React.memo(function CompetitionHeader({
       <Animated.Text style={{ color: '#484F58', fontSize: 12, transform: [{ rotate }] }}>▼</Animated.Text>
     </TouchableOpacity>
   );
-});
+}

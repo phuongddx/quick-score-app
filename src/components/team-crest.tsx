@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text } from 'react-native';
 import type { Team } from '../types';
 
@@ -16,7 +15,7 @@ function getTeamColor(teamId: string): string {
   return CREST_COLORS[Math.abs(hash) % CREST_COLORS.length]!;
 }
 
-export const TeamCrest = React.memo(function TeamCrest({ team, size = 28 }: Props) {
+export function TeamCrest({ team, size = 28 }: Props) {
   return (
     <View
       style={{
@@ -33,4 +32,4 @@ export const TeamCrest = React.memo(function TeamCrest({ team, size = 28 }: Prop
       </Text>
     </View>
   );
-});
+}

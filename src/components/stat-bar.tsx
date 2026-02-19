@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text } from 'react-native';
 
 interface Props {
@@ -8,7 +7,7 @@ interface Props {
   isPercentage?: boolean;
 }
 
-export const StatBar = React.memo(function StatBar({ label, homeValue, awayValue, isPercentage }: Props) {
+export function StatBar({ label, homeValue, awayValue, isPercentage }: Props) {
   const total = homeValue + awayValue;
   const homeFlex = total === 0 ? 1 : homeValue / total;
   const awayFlex = total === 0 ? 1 : awayValue / total;
@@ -30,4 +29,4 @@ export const StatBar = React.memo(function StatBar({ label, homeValue, awayValue
       </View>
     </View>
   );
-});
+}

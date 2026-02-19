@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { View, Text, Animated } from 'react-native';
 import type { Team, MatchScore, MatchStatus } from '../types';
 import { TeamCrest } from './team-crest';
@@ -20,7 +20,7 @@ function StatusPill({ status, minute }: { status: MatchStatus; minute?: number }
   return <Text style={{ color: '#8B949E', fontSize: 13, fontWeight: '600' }}>Scheduled</Text>;
 }
 
-export const ScoreBoard = React.memo(function ScoreBoard({
+export function ScoreBoard({
   homeTeam, awayTeam, score, status, minute,
 }: Props) {
   // Flash animation on score change
@@ -68,4 +68,4 @@ export const ScoreBoard = React.memo(function ScoreBoard({
       </View>
     </View>
   );
-});
+}

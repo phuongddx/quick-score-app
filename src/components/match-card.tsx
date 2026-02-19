@@ -1,4 +1,3 @@
-import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import type { Match } from '../types';
 import { TeamCrest } from './team-crest';
@@ -49,7 +48,7 @@ function EventPills({ match }: { match: Match }) {
   );
 }
 
-export const MatchCard = React.memo(function MatchCard({ match, onPress }: Props) {
+export function MatchCard({ match, onPress }: Props) {
   const isLive = match.status === 'live' || match.status === 'halftime';
   const scoreStr = `${match.score.home} - ${match.score.away}`;
 
@@ -92,4 +91,4 @@ export const MatchCard = React.memo(function MatchCard({ match, onPress }: Props
       </View>
     </TouchableOpacity>
   );
-});
+}

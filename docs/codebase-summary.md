@@ -1,7 +1,7 @@
 # Quick Score - Codebase Summary
 
 ## Project Overview
-Quick Score is a fully-functional React Native football live score app built with Expo 52+ managed workflow. It provides real-time scores, fixtures, standings, and detailed match information for 5 European leagues with dark theme throughout.
+Quick Score is a fully-functional React Native football live score app built with Expo 54+ managed workflow. It provides real-time scores, fixtures, standings, and detailed match information for 5 European leagues with dark theme throughout.
 
 **Status:** v1.0 Complete - 49 tests, 100% pass rate
 
@@ -111,18 +111,20 @@ app/
 
 | Category | Library | Version |
 |----------|---------|---------|
-| Framework | Expo (managed) | 52.0+ |
-| Runtime | React Native | 0.76+ |
-| Navigation | Expo Router | v4 (file-based) |
+| Framework | Expo (managed) | 54.0+ |
+| Runtime | React Native | 0.81+ |
+| React | React | 19.1+ |
+| Navigation | Expo Router | v6 (file-based) |
 | State (Server) | TanStack Query | v5 |
 | State (UI) | Zustand | v5 |
-| UI Components | Gluestack UI | v3 (Switch, Modal) |
 | Styling | NativeWind | v4 (Tailwind CSS) |
-| Storage | AsyncStorage | 1.22+ |
+| Storage | AsyncStorage | 2.2+ |
+| Animations | react-native-reanimated | v4 (+ worklets) |
 | Testing | Vitest | Latest |
-| Notifications | expo-notifications | 0.28+ |
+| Notifications | expo-notifications | 0.32+ |
 | Icons | lucide-react-native | Latest |
 | Build | EAS Build | Managed |
+| Compiler | React Compiler | enabled (SDK 54+) |
 
 ## Key Data Flow
 ```
@@ -156,7 +158,7 @@ Zustand stores (favorites, filters, settings) operate independently, feeding UI 
 - **TypeScript:** Strict mode, no `any`
 - **Imports:** Named exports preferred
 - **Styling:** NativeWind classes + color tokens in tailwind.config.js
-- **Components:** Functional only, React.memo for lists
+- **Components:** Functional only; React Compiler handles memoization (no manual React.memo)
 
 ## Configuration Files
 - `tailwind.config.js` - Dark theme colors, z-index scale
