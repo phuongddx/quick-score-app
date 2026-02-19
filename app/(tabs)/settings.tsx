@@ -1,58 +1,16 @@
 import React from 'react';
-import { View, Text, Switch, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Constants from 'expo-constants';
+import { Bell, Activity, Sun, Moon, Database, HelpCircle, Shield } from 'lucide-react-native';
+import { SettingsRow } from '@/components/settings/settings-row';
+import { SettingsSectionHeader } from '@/components/settings/settings-section-header';
+import { SettingsProfileCard } from '@/components/settings/settings-profile-card';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 
-interface ToggleRowProps {
-  label: string;
-  description?: string;
-  value: boolean;
-  onValueChange: (v: boolean) => void;
-}
-
-function ToggleRow({ label, description, value, onValueChange }: ToggleRowProps) {
-  return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center',
-      paddingHorizontal: 16, paddingVertical: 14,
-      borderBottomWidth: 1, borderBottomColor: '#21262D',
-    }}>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: '#E6EDF3', fontSize: 15 }}>{label}</Text>
-        {description ? (
-          <Text style={{ color: '#8B949E', fontSize: 12, marginTop: 2 }}>{description}</Text>
-        ) : null}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: '#30363D', true: 'rgba(33,150,243,0.4)' }}
-        thumbColor={value ? '#2196F3' : '#484F58'}
-      />
-    </View>
-  );
-}
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 6 }}>
-      <Text style={{ color: '#8B949E', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        {title}
-      </Text>
-    </View>
-  );
-}
-
 export default function SettingsScreen() {
-  const {
-    notifyGoals, notifyRedCards, notifyMatchStart, notifyFavoritesOnly,
-    setNotifyGoals, setNotifyRedCards, setNotifyMatchStart, setNotifyFavoritesOnly,
-  } = useSettingsStore();
+  const { pushNotifications, liveMatchUpdates, theme, setPushNotifications, setLiveMatchUpdates, toggleTheme } = useSettingsStore();
   const { clearAll } = useFavoritesStore();
-
-  const version = Constants.expoConfig?.version ?? '1.0.0';
 
   const handleClearFavorites = () => {
     Alert.alert(
@@ -65,37 +23,42 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleComingSoon = () => Alert.alert('Coming Soon', 'This feature is coming soon.');
+  const AppearanceIcon = theme === 'dark' ? Moon : Sun;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D1117' }} edges={['top']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-        <Text style={{ color: '#E6EDF3', fontSize: 20, fontWeight: '700', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
+        <Text style={{ color: '#E6EDF3', fontSize: 20, fontWeight: '700', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16 }}>
           Settings
         </Text>
 
-        {/* Notifications */}
-        <SectionHeader title="Notifications" />
+        {/* Profile */}
+        <SettingsProfileCard name="Quick Score User" email="user@quickscore.app" initials="QS" badgeLabel="Pro" />
+
+        {/* General */}
+        <SettingsSectionHeader title="General" />
         <View style={{ backgroundColor: '#161B22', borderRadius: 10, marginHorizontal: 12, overflow: 'hidden' }}>
-          <ToggleRow label="Goals" description="Get notified when a goal is scored" value={notifyGoals} onValueChange={setNotifyGoals} />
-          <ToggleRow label="Red Cards" description="Get notified for red card events" value={notifyRedCards} onValueChange={setNotifyRedCards} />
-          <ToggleRow label="Match Start" description="Get notified when a match kicks off" value={notifyMatchStart} onValueChange={setNotifyMatchStart} />
-          <ToggleRow label="Favorites Only" description="Only notify for saved teams" value={notifyFavoritesOnly} onValueChange={setNotifyFavoritesOnly} />
+          <SettingsRow icon={<Bell size={18} color="#8B949E" />} label="Push Notifications" toggle={{ value: pushNotifications, onValueChange: setPushNotifications }} />
+          <SettingsRow icon={<Activity size={18} color="#8B949E" />} label="Live Match Updates" toggle={{ value: liveMatchUpdates, onValueChange: setLiveMatchUpdates }} />
+          <SettingsRow icon={<AppearanceIcon size={18} color="#8B949E" />} label="Appearance" value={theme === 'dark' ? 'Dark' : 'Light'} onPress={toggleTheme} showBorder={false} />
         </View>
 
-        {/* App Info */}
-        <SectionHeader title="App Info" />
+        {/* API & Usage */}
+        <SettingsSectionHeader title="API & Usage" />
         <View style={{ backgroundColor: '#161B22', borderRadius: 10, marginHorizontal: 12, overflow: 'hidden' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#21262D' }}>
-            <Text style={{ color: '#E6EDF3', fontSize: 15 }}>Version</Text>
-            <Text style={{ color: '#8B949E', fontSize: 14 }}>{version}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 }}>
-            <Text style={{ color: '#E6EDF3', fontSize: 15 }}>Data Source</Text>
-            <Text style={{ color: '#8B949E', fontSize: 14 }}>Mock data</Text>
-          </View>
+          <SettingsRow icon={<Database size={18} color="#8B949E" />} label="Data Source" value="Mock" showBorder={false} />
         </View>
 
-        {/* Data */}
-        <SectionHeader title="Data" />
+        {/* Support */}
+        <SettingsSectionHeader title="Support" />
+        <View style={{ backgroundColor: '#161B22', borderRadius: 10, marginHorizontal: 12, overflow: 'hidden' }}>
+          <SettingsRow icon={<HelpCircle size={18} color="#8B949E" />} label="Help Center" onPress={handleComingSoon} />
+          <SettingsRow icon={<Shield size={18} color="#8B949E" />} label="Privacy Policy" onPress={handleComingSoon} showBorder={false} />
+        </View>
+
+        {/* Danger Zone */}
+        <SettingsSectionHeader title="Danger Zone" />
         <View style={{ marginHorizontal: 12 }}>
           <TouchableOpacity
             onPress={handleClearFavorites}

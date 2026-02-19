@@ -1,23 +1,19 @@
 import { create } from 'zustand';
 
 interface SettingsState {
-  notifyGoals: boolean;
-  notifyRedCards: boolean;
-  notifyMatchStart: boolean;
-  notifyFavoritesOnly: boolean;
-  setNotifyGoals: (v: boolean) => void;
-  setNotifyRedCards: (v: boolean) => void;
-  setNotifyMatchStart: (v: boolean) => void;
-  setNotifyFavoritesOnly: (v: boolean) => void;
+  pushNotifications: boolean;
+  liveMatchUpdates: boolean;
+  theme: 'dark' | 'light';
+  setPushNotifications: (v: boolean) => void;
+  setLiveMatchUpdates: (v: boolean) => void;
+  toggleTheme: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()((set) => ({
-  notifyGoals: true,
-  notifyRedCards: true,
-  notifyMatchStart: true,
-  notifyFavoritesOnly: false,
-  setNotifyGoals: (v) => set({ notifyGoals: v }),
-  setNotifyRedCards: (v) => set({ notifyRedCards: v }),
-  setNotifyMatchStart: (v) => set({ notifyMatchStart: v }),
-  setNotifyFavoritesOnly: (v) => set({ notifyFavoritesOnly: v }),
+  pushNotifications: true,
+  liveMatchUpdates: true,
+  theme: 'dark',
+  setPushNotifications: (v) => set({ pushNotifications: v }),
+  setLiveMatchUpdates: (v) => set({ liveMatchUpdates: v }),
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
 }));
