@@ -21,6 +21,7 @@ Quick Score is a fully-functional React Native football live score app built wit
 ```
 app/
 ├── _layout.tsx           # Root: QueryClientProvider, StatusBar, Stack nav
+├── pro-plans.tsx         # Pro Plans paywall: yearly/monthly selection, features, CTA
 ├── (tabs)/
 │   ├── _layout.tsx       # 5-tab Tabs nav + badge for live match count
 │   ├── index.tsx         # Scores: live matches grouped by league
@@ -32,7 +33,7 @@ app/
     └── [id].tsx          # Match detail: ScoreBoard + 4 tabs
 ```
 
-### `/src/components` - Reusable UI Components (17 total)
+### `/src/components` - Reusable UI Components (19 total)
 | Component | Purpose |
 |-----------|---------|
 | `match-card.tsx` | Live match display with score & status |
@@ -51,8 +52,11 @@ app/
 | `settings/settings-row.tsx` | Generic settings row with toggle/value/chevron |
 | `settings/settings-section-header.tsx` | Muted all-caps section title |
 | `settings/settings-profile-card.tsx` | Profile card with avatar, name, email, badge |
+| `pro/plan-card.tsx` | Radio-selectable plan card (yearly/monthly) with glow shadow |
+| `pro/feature-item.tsx` | Feature row with icon container for paywall |
 
-**Settings Components:** 3 new modular components for redesigned Settings screen
+**Pro Components:** 2 new paywall components for subscription modal
+**Settings Components:** 3 modular components for redesigned Settings screen
 **Test Coverage:** match-card, standings-table, live-indicator tested; 100% pass
 
 ### `/src/hooks` - TanStack Query & Custom Hooks (6 total)

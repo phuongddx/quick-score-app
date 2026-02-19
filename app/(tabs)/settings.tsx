@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, Activity, Sun, Moon, Globe, Key, HelpCircle, Shield, LogOut } from 'lucide-react-native';
+import { Bell, Activity, Sun, Moon, Globe, Key, HelpCircle, Shield, LogOut, Crown } from 'lucide-react-native';
 import { SettingsRow } from '@/components/settings/settings-row';
 import { SettingsSectionHeader } from '@/components/settings/settings-section-header';
 import { SettingsProfileCard } from '@/components/settings/settings-profile-card';
@@ -36,7 +37,7 @@ export default function SettingsScreen() {
   };
 
   const handleComingSoon = () => Alert.alert('Coming Soon', 'This feature is coming soon.');
-  const handleUpgrade = () => Alert.alert('Go Premium', 'Premium upgrade coming soon.');
+  const handleUpgrade = () => router.push('/pro-plans' as never);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D1117' }} edges={['top']}>
@@ -87,8 +88,17 @@ export default function SettingsScreen() {
             label="Language"
             value={language}
             onPress={handleComingSoon}
-            showBorder={false}
+            showBorder={!isLoggedIn}
           />
+          {!isLoggedIn && (
+            <SettingsRow
+              icon={<Crown size={18} color="#257bf4" />}
+              label="QuickScore Pro"
+              value="Upgrade"
+              onPress={handleUpgrade}
+              showBorder={false}
+            />
+          )}
         </View>
 
         {/* API & Usage */}

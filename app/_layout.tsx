@@ -56,6 +56,15 @@ export default function RootLayout() {
               animation: 'slide_from_right',
             }}
           />
+          {/* Pro plans paywall — fullscreen modal slide-up */}
+          <Stack.Screen
+            name="pro-plans"
+            options={{
+              headerShown: false,
+              presentation: 'fullScreenModal',
+              animation: 'slide_from_bottom',
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
