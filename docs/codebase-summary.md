@@ -32,7 +32,7 @@ app/
     └── [id].tsx          # Match detail: ScoreBoard + 4 tabs
 ```
 
-### `/src/components` - Reusable UI Components (14 total)
+### `/src/components` - Reusable UI Components (17 total)
 | Component | Purpose |
 |-----------|---------|
 | `match-card.tsx` | Live match display with score & status |
@@ -48,7 +48,11 @@ app/
 | `stat-bar.tsx` | Horizontal stat bar with % |
 | `loading-skeleton.tsx` | Placeholder animations |
 | `empty-state.tsx` | No data fallback UI |
+| `settings/settings-row.tsx` | Generic settings row with toggle/value/chevron |
+| `settings/settings-section-header.tsx` | Muted all-caps section title |
+| `settings/settings-profile-card.tsx` | Profile card with avatar, name, email, badge |
 
+**Settings Components:** 3 new modular components for redesigned Settings screen
 **Test Coverage:** match-card, standings-table, live-indicator tested; 100% pass
 
 ### `/src/hooks` - TanStack Query & Custom Hooks (6 total)
@@ -64,12 +68,13 @@ app/
 **All hooks verified working; tested with mock data service**
 
 ### `/src/stores` - Zustand State Management (3 total)
-| Store | Purpose | Persistence |
-|-------|---------|-------------|
-| `favorites-store.ts` | Save/unsave teams & competitions | AsyncStorage |
-| `filters-store.ts` | Date, league, team filters | Memory |
-| `settings-store.ts` | Notification preferences | Memory |
+| Store | Purpose | Persistence | Fields |
+|-------|---------|-------------|--------|
+| `favorites-store.ts` | Save/unsave teams & competitions | AsyncStorage | savedTeams, savedCompetitions |
+| `filters-store.ts` | Date, league, team filters | Memory | date, league, team |
+| `settings-store.ts` | App preferences (push notifications, live updates, theme) | Memory | pushNotifications, liveMatchUpdates, theme + setters |
 
+**Settings Store Redesigned:** Now includes `pushNotifications`, `liveMatchUpdates`, `theme` ('dark'/'light'), with `toggleTheme()` action
 **Test Coverage:** favorites-store, filters-store tested; persistence verified
 
 ### `/src/services` - Data & API Layer

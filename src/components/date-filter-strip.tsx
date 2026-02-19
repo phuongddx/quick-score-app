@@ -51,8 +51,9 @@ export function DateFilterStrip({ selectedDate, onDateChange, daysRange = 3 }: P
       ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={{ backgroundColor: '#161B22' }}
-      contentContainerStyle={{ paddingHorizontal: 8 }}
+      // maxHeight prevents the ScrollView from stretching vertically inside a flex column
+      style={{ backgroundColor: '#161B22', maxHeight: 56 }}
+      contentContainerStyle={{ paddingHorizontal: 8, alignItems: 'flex-start' }}
     >
       {days.map((day) => {
         const iso = toISO(day);
