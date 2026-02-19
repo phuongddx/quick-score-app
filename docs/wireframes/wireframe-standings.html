@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>Quick Score – Standings</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:     #0D1117;
+    --bg-surface:     #161B22;
+    --bg-surface-alt: #1C2128;
+    --bg-elevated:    #21262D;
+    --border:         #30363D;
+    --border-subtle:  #21262D;
+    --text-primary:   #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-muted:     #484F58;
+    --accent-live:    #00C853;
+    --accent-danger:  #FF3D3D;
+    --accent-warning: #FFB300;
+    --accent-blue:    #2196F3;
+    --data-cl:        #00C853;
+    --data-el:        #FF9800;
+    --data-ecl:       #9C27B0;
+    --data-relegation:#FF3D3D;
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Roboto Mono', 'SF Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-main);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    width: 375px;
+    margin: 0 auto;
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+
+  /* ── Status Bar ─────────────────────────────────────────── */
+  .status-bar {
+    height: 44px;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 600; }
+
+  /* ── App Bar ─────────────────────────────────────────────── */
+  .app-bar {
+    height: 44px;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .app-bar-title {
+    font-size: 20px;
+    font-weight: 700;
+    flex: 1;
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); cursor: pointer; border-radius: 50%;
+  }
+
+  /* ── League Selector Strip ───────────────────────────────── */
+  .league-strip {
+    background: var(--bg-surface);
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 88px;
+    z-index: 40;
+  }
+  .league-strip::-webkit-scrollbar { display: none; }
+  .league-tab {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: all 200ms ease;
+  }
+  .league-tab.active {
+    background: var(--accent-blue);
+    color: #fff;
+  }
+  .league-tab:not(.active):hover {
+    background: var(--bg-surface-alt);
+  }
+  .league-flag {
+    width: 16px; height: 12px; border-radius: 2px; flex-shrink: 0;
+  }
+  .flag-en { background: linear-gradient(#012169 33%,#fff 33%,#fff 50%,#C8102E 50%); }
+  .flag-es { background: linear-gradient(#AA151B 25%,#F1BF00 25%,#F1BF00 75%,#AA151B 75%); }
+  .flag-de { background: linear-gradient(#000 33%,#D00 33%,#D00 67%,#FFCE00 67%); }
+  .flag-it { background: linear-gradient(90deg,#009246 33%,#fff 33%,#fff 67%,#CE2B37 67%); }
+  .flag-fr { background: linear-gradient(90deg,#002395 33%,#fff 33%,#fff 67%,#ED2939 67%); }
+
+  /* ── Season/Round Selector ───────────────────────────────── */
+  .round-bar {
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .round-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .season-label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── Table Header ────────────────────────────────────────── */
+  .table-header {
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 140px;
+    z-index: 30;
+  }
+  .th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+  .th-pos  { width: 28px; text-align: center; }
+  .th-team { flex: 1; text-align: left; padding-left: 36px; }
+  .th-mp   { width: 28px; }
+  .th-w    { width: 24px; }
+  .th-d    { width: 24px; }
+  .th-l    { width: 24px; }
+  .th-gd   { width: 32px; }
+  .th-pts  { width: 32px; color: var(--text-secondary); }
+
+  /* ── Table Rows ──────────────────────────────────────────── */
+  .table-body { padding-bottom: 72px; }
+
+  .standing-row {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 44px;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background 150ms ease;
+    position: relative;
+  }
+  .standing-row:hover { background: var(--bg-surface-alt); }
+
+  /* Zone color indicator — 3px left border */
+  .standing-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+  }
+  .zone-cl::before    { background: var(--data-cl); }
+  .zone-el::before    { background: var(--data-el); }
+  .zone-ecl::before   { background: var(--data-ecl); }
+  .zone-rel::before   { background: var(--data-relegation); }
+
+  /* Highlighted row (user's saved team) */
+  .standing-row.highlighted {
+    background: var(--accent-blue-dim, rgba(33,150,243,0.08));
+  }
+  .standing-row.highlighted:hover {
+    background: rgba(33,150,243,0.14);
+  }
+
+  .td { text-align: center; }
+  .td-pos {
+    width: 28px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+  /* Position change indicator */
+  .pos-up   { color: var(--data-cl); }
+  .pos-down { color: var(--data-relegation); }
+  .pos-same { color: var(--text-muted); }
+
+  .td-team {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 4px;
+  }
+  .team-crest {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .team-name-td {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+  }
+
+  .td-stat {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+  .td-mp  { width: 28px; }
+  .td-w   { width: 24px; }
+  .td-d   { width: 24px; }
+  .td-l   { width: 24px; }
+  .td-gd  { width: 32px; }
+  .td-gd.positive { color: var(--data-cl); }
+  .td-gd.negative { color: var(--data-relegation); }
+  .td-pts {
+    width: 32px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+  }
+
+  /* Form dots */
+  .form-dots {
+    display: flex;
+    gap: 2px;
+    margin-left: 4px;
+  }
+  .form-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .form-w { background: var(--data-cl); }
+  .form-d { background: var(--accent-warning); }
+  .form-l { background: var(--data-relegation); }
+
+  /* ── Zone Legend ─────────────────────────────────────────── */
+  .zone-legend {
+    background: var(--bg-surface);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .legend-color {
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Form Table (per team hover detail) ─────────────────── */
+  .form-section {
+    padding: 0 16px 12px;
+    margin-top: 8px;
+  }
+  .form-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 0 6px;
+  }
+
+  /* ── Bottom Tab Bar ──────────────────────────────────────── */
+  .bottom-tabs {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 375px; height: 56px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: stretch;
+    z-index: 100;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; cursor: pointer;
+    color: var(--text-muted);
+    min-height: 44px;
+    transition: color 200ms ease;
+  }
+  .tab-item.active { color: var(--accent-blue); }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-label { font-size: 10px; font-weight: 500; }
+
+  /* Crests */
+  .c-mancity   { background: #97C1E7; color: #000 !important; }
+  .c-arsenal   { background: #EF0107; }
+  .c-liverpool { background: #C8102E; }
+  .c-chelsea   { background: #034694; }
+  .c-spurs     { background: #132257; }
+  .c-manu      { background: #DA020E; }
+  .c-newcastle { background: #241F20; border: 1px solid #555; }
+  .c-aston     { background: #95BFE5; color: #4B0E10 !important; }
+  .c-brentford { background: #E30613; }
+  .c-wolves    { background: #FDB913; color: #000 !important; }
+  .c-brighton  { background: #0057B8; }
+  .c-everton   { background: #003399; }
+  .c-fulham    { background: #CC0000; }
+  .c-westham   { background: #7A263A; }
+  .c-bournemouth { background: #DA291C; }
+  .c-forest    { background: #DD0000; }
+  .c-palace    { background: #1B458F; }
+  .c-leicester { background: #003090; }
+  .c-ipswich   { background: #0044A9; }
+  .c-southampton { background: #D71920; }
+
+  .annotation-block {
+    background: #080c18;
+    border-top: 2px solid #1e2d5a;
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5a6a9a;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ STATUS BAR ══════════════════════════════════════════ -->
+<div class="status-bar">
+  <span class="time">9:41</span>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="6" width="3" height="6" fill="#E6EDF3"/><rect x="4.5" y="4" width="3" height="8" fill="#E6EDF3"/><rect x="9" y="2" width="3" height="10" fill="#E6EDF3"/><rect x="13.5" y="0" width="3" height="12" fill="#E6EDF3"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#E6EDF3" stroke-opacity="0.35"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#E6EDF3"/></svg>
+  </div>
+</div>
+
+<!-- ══ APP BAR ══════════════════════════════════════════════ -->
+<div class="app-bar">
+  <span class="app-bar-title">Standings</span>
+  <div class="icon-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  </div>
+</div>
+
+<!-- ══ LEAGUE SELECTOR ══════════════════════════════════════ -->
+<div class="league-strip">
+  <div class="league-tab active">
+    <div class="league-flag flag-en"></div>
+    Premier League
+  </div>
+  <div class="league-tab">
+    <div class="league-flag flag-es"></div>
+    La Liga
+  </div>
+  <div class="league-tab">
+    <div class="league-flag flag-de"></div>
+    Bundesliga
+  </div>
+  <div class="league-tab">
+    <div class="league-flag flag-it"></div>
+    Serie A
+  </div>
+  <div class="league-tab">
+    <div class="league-flag flag-fr"></div>
+    Ligue 1
+  </div>
+</div>
+
+<!-- ══ ROUND/SEASON BAR ═════════════════════════════════════ -->
+<div class="round-bar">
+  <span class="round-selector">
+    Gameweek 27
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </span>
+  <span class="season-label">2024/25 Season</span>
+</div>
+
+<!-- ══ TABLE HEADER ═════════════════════════════════════════ -->
+<div class="table-header">
+  <div class="th th-pos">#</div>
+  <div class="th th-team">Club</div>
+  <div class="th th-mp">MP</div>
+  <div class="th th-w">W</div>
+  <div class="th th-d">D</div>
+  <div class="th th-l">L</div>
+  <div class="th th-gd">GD</div>
+  <div class="th th-pts">Pts</div>
+</div>
+
+<!-- ══ TABLE BODY ══════════════════════════════════════════ -->
+<div class="table-body">
+
+  <!-- CL zone (top 4) -->
+
+  <!-- 1. Liverpool -->
+  <div class="standing-row zone-cl">
+    <div class="td-pos pos-same">1</div>
+    <div class="td-team">
+      <div class="team-crest c-liverpool">LIV</div>
+      <span class="team-name-td">Liverpool</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">19</div>
+    <div class="td-stat td-d">5</div>
+    <div class="td-stat td-l">3</div>
+    <div class="td-stat td-gd positive">+38</div>
+    <div class="td-pts">62</div>
+  </div>
+
+  <!-- 2. Arsenal (highlighted — user's saved team) -->
+  <div class="standing-row zone-cl highlighted">
+    <div class="td-pos pos-up">2</div>
+    <div class="td-team">
+      <div class="team-crest c-arsenal">ARS</div>
+      <span class="team-name-td" style="font-weight:600;">Arsenal</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+      </div>
+      <!-- Live indicator — match in progress -->
+      <div style="display:flex;align-items:center;gap:3px;margin-left:4px;">
+        <div style="width:5px;height:5px;border-radius:50%;background:var(--accent-live);animation:live-pulse 1.5s ease-in-out infinite;"></div>
+        <span style="font-size:9px;color:var(--accent-live);font-weight:600;">67'</span>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">17</div>
+    <div class="td-stat td-d">6</div>
+    <div class="td-stat td-l">4</div>
+    <div class="td-stat td-gd positive">+26</div>
+    <div class="td-pts" style="color:var(--accent-blue);">57</div>
+  </div>
+
+  <!-- 3. Man City -->
+  <div class="standing-row zone-cl">
+    <div class="td-pos pos-down">3</div>
+    <div class="td-team">
+      <div class="team-crest c-mancity">MC</div>
+      <span class="team-name-td">Man City</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">15</div>
+    <div class="td-stat td-d">6</div>
+    <div class="td-stat td-l">6</div>
+    <div class="td-stat td-gd positive">+18</div>
+    <div class="td-pts">51</div>
+  </div>
+
+  <!-- 4. Chelsea -->
+  <div class="standing-row zone-cl">
+    <div class="td-pos pos-same">4</div>
+    <div class="td-team">
+      <div class="team-crest c-chelsea">CHE</div>
+      <span class="team-name-td">Chelsea</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">14</div>
+    <div class="td-stat td-d">7</div>
+    <div class="td-stat td-l">6</div>
+    <div class="td-stat td-gd positive">+14</div>
+    <div class="td-pts">49</div>
+  </div>
+
+  <!-- EL zone (5-6) -->
+
+  <!-- 5. Nottm Forest -->
+  <div class="standing-row zone-el">
+    <div class="td-pos pos-up">5</div>
+    <div class="td-team">
+      <div class="team-crest c-forest">NFO</div>
+      <span class="team-name-td">Nottm Forest</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">13</div>
+    <div class="td-stat td-d">9</div>
+    <div class="td-stat td-l">5</div>
+    <div class="td-stat td-gd positive">+8</div>
+    <div class="td-pts">48</div>
+  </div>
+
+  <!-- 6. Newcastle -->
+  <div class="standing-row zone-el">
+    <div class="td-pos pos-same">6</div>
+    <div class="td-team">
+      <div class="team-crest c-newcastle">NEW</div>
+      <span class="team-name-td">Newcastle</span>
+      <div class="form-dots">
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">12</div>
+    <div class="td-stat td-d">9</div>
+    <div class="td-stat td-l">6</div>
+    <div class="td-stat td-gd positive">+11</div>
+    <div class="td-pts">45</div>
+  </div>
+
+  <!-- ECL zone (7) -->
+  <!-- 7. Aston Villa -->
+  <div class="standing-row zone-ecl">
+    <div class="td-pos pos-down">7</div>
+    <div class="td-team">
+      <div class="team-crest c-aston">AVL</div>
+      <span class="team-name-td">Aston Villa</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">26</div>
+    <div class="td-stat td-w">11</div>
+    <div class="td-stat td-d">9</div>
+    <div class="td-stat td-l">6</div>
+    <div class="td-stat td-gd positive">+6</div>
+    <div class="td-pts">42</div>
+  </div>
+
+  <!-- Mid-table (no zone) -->
+
+  <!-- 8. Spurs -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">8</div>
+    <div class="td-team">
+      <div class="team-crest c-spurs">TOT</div>
+      <span class="team-name-td">Tottenham</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">11</div>
+    <div class="td-stat td-d">5</div>
+    <div class="td-stat td-l">11</div>
+    <div class="td-stat td-gd">-2</div>
+    <div class="td-pts">38</div>
+  </div>
+
+  <!-- 9. Brighton -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">9</div>
+    <div class="td-team">
+      <div class="team-crest c-brighton">BHA</div>
+      <span class="team-name-td">Brighton</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">10</div>
+    <div class="td-stat td-d">7</div>
+    <div class="td-stat td-l">10</div>
+    <div class="td-stat td-gd">+1</div>
+    <div class="td-pts">37</div>
+  </div>
+
+  <!-- 10. Fulham -->
+  <div class="standing-row">
+    <div class="td-pos pos-up">10</div>
+    <div class="td-team">
+      <div class="team-crest c-fulham">FUL</div>
+      <span class="team-name-td">Fulham</span>
+      <div class="form-dots">
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">10</div>
+    <div class="td-stat td-d">6</div>
+    <div class="td-stat td-l">11</div>
+    <div class="td-stat td-gd">-1</div>
+    <div class="td-pts">36</div>
+  </div>
+
+  <!-- 11. Man United -->
+  <div class="standing-row">
+    <div class="td-pos pos-down">11</div>
+    <div class="td-team">
+      <div class="team-crest c-manu">MUN</div>
+      <span class="team-name-td">Man United</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">9</div>
+    <div class="td-stat td-d">6</div>
+    <div class="td-stat td-l">12</div>
+    <div class="td-stat td-gd negative">-9</div>
+    <div class="td-pts">33</div>
+  </div>
+
+  <!-- 12. Brentford -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">12</div>
+    <div class="td-team">
+      <div class="team-crest c-brentford">BRE</div>
+      <span class="team-name-td">Brentford</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-w"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">9</div>
+    <div class="td-stat td-d">5</div>
+    <div class="td-stat td-l">13</div>
+    <div class="td-stat td-gd negative">-3</div>
+    <div class="td-pts">32</div>
+  </div>
+
+  <!-- 13. Everton -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">13</div>
+    <div class="td-team">
+      <div class="team-crest c-everton">EVE</div>
+      <span class="team-name-td">Everton</span>
+      <div class="form-dots">
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-d"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">7</div>
+    <div class="td-stat td-d">9</div>
+    <div class="td-stat td-l">11</div>
+    <div class="td-stat td-gd negative">-10</div>
+    <div class="td-pts">30</div>
+  </div>
+
+  <!-- 14. West Ham -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">14</div>
+    <div class="td-team">
+      <div class="team-crest c-westham">WHU</div>
+      <span class="team-name-td">West Ham</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">7</div>
+    <div class="td-stat td-d">7</div>
+    <div class="td-stat td-l">13</div>
+    <div class="td-stat td-gd negative">-11</div>
+    <div class="td-pts">28</div>
+  </div>
+
+  <!-- 15. Crystal Palace -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">15</div>
+    <div class="td-team">
+      <div class="team-crest c-palace">CRY</div>
+      <span class="team-name-td">Crystal Palace</span>
+      <div class="form-dots">
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">5</div>
+    <div class="td-stat td-d">12</div>
+    <div class="td-stat td-l">10</div>
+    <div class="td-stat td-gd negative">-8</div>
+    <div class="td-pts">27</div>
+  </div>
+
+  <!-- 16. Wolves -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">16</div>
+    <div class="td-team">
+      <div class="team-crest c-wolves">WOL</div>
+      <span class="team-name-td">Wolves</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">5</div>
+    <div class="td-stat td-d">10</div>
+    <div class="td-stat td-l">12</div>
+    <div class="td-stat td-gd negative">-16</div>
+    <div class="td-pts">25</div>
+  </div>
+
+  <!-- 17. Bournemouth -->
+  <div class="standing-row">
+    <div class="td-pos pos-same">17</div>
+    <div class="td-team">
+      <div class="team-crest c-bournemouth">BOU</div>
+      <span class="team-name-td">Bournemouth</span>
+      <div class="form-dots">
+        <div class="form-dot form-w"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">6</div>
+    <div class="td-stat td-d">6</div>
+    <div class="td-stat td-l">15</div>
+    <div class="td-stat td-gd negative">-14</div>
+    <div class="td-pts">24</div>
+  </div>
+
+  <!-- Relegation zone (18-20) -->
+
+  <!-- 18. Leicester -->
+  <div class="standing-row zone-rel">
+    <div class="td-pos pos-down">18</div>
+    <div class="td-team">
+      <div class="team-crest c-leicester">LEI</div>
+      <span class="team-name-td">Leicester</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">5</div>
+    <div class="td-stat td-d">5</div>
+    <div class="td-stat td-l">17</div>
+    <div class="td-stat td-gd negative">-21</div>
+    <div class="td-pts">20</div>
+  </div>
+
+  <!-- 19. Ipswich -->
+  <div class="standing-row zone-rel">
+    <div class="td-pos pos-same">19</div>
+    <div class="td-team">
+      <div class="team-crest c-ipswich">IPS</div>
+      <span class="team-name-td">Ipswich</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-d"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">4</div>
+    <div class="td-stat td-d">6</div>
+    <div class="td-stat td-l">17</div>
+    <div class="td-stat td-gd negative">-28</div>
+    <div class="td-pts">18</div>
+  </div>
+
+  <!-- 20. Southampton -->
+  <div class="standing-row zone-rel">
+    <div class="td-pos pos-same">20</div>
+    <div class="td-team">
+      <div class="team-crest c-southampton">SOU</div>
+      <span class="team-name-td">Southampton</span>
+      <div class="form-dots">
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+        <div class="form-dot form-l"></div>
+      </div>
+    </div>
+    <div class="td-stat td-mp">27</div>
+    <div class="td-stat td-w">2</div>
+    <div class="td-stat td-d">4</div>
+    <div class="td-stat td-l">21</div>
+    <div class="td-stat td-gd negative">-37</div>
+    <div class="td-pts">10</div>
+  </div>
+
+  <!-- ── Zone Legend ────────────────────────────────────────── -->
+  <div class="zone-legend">
+    <div class="legend-item">
+      <div class="legend-color" style="background:var(--data-cl);"></div>
+      UEFA Champions League (Top 4)
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background:var(--data-el);"></div>
+      UEFA Europa League (5th–6th)
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background:var(--data-ecl);"></div>
+      UEFA Conference League (7th)
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background:var(--data-relegation);"></div>
+      Relegation (18th–20th)
+    </div>
+  </div>
+
+</div><!-- /table-body -->
+
+<!-- ══ BOTTOM TABS ════════════════════════════════════════ -->
+<div class="bottom-tabs">
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <span class="tab-label">Scores</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="tab-label">Fixtures</span>
+  </div>
+  <div class="tab-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="tab-label">Standings</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span class="tab-label">Favorites</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="tab-label">Settings</span>
+  </div>
+</div>
+
+<style>
+  @keyframes live-pulse {
+    0%   { opacity: 1; transform: scale(1); }
+    50%  { opacity: 0.4; transform: scale(1.6); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [style*="animation"] { animation: none !important; }
+  }
+</style>
+
+<!-- ══ ANNOTATIONS ════════════════════════════════════════ -->
+<div class="annotation-block">
+  <div style="color:#7b8cde;font-size:13px;font-weight:600;margin-bottom:12px;">Wireframe: Standings – Key Patterns</div>
+  <div>● <strong style="color:#9db4f0">Zone border</strong>: 3px left edge — CL=#00C853, EL=#FF9800, ECL=#9C27B0, REL=#FF3D3D</div>
+  <div>● <strong style="color:#9db4f0">Highlighted row</strong>: user's saved team — blue dim bg + bold name + blue pts</div>
+  <div>● <strong style="color:#9db4f0">Live match marker</strong>: pulsing dot + minute on team row if playing now</div>
+  <div>● <strong style="color:#9db4f0">Form dots</strong>: 5 most recent — W=green, D=amber, L=red — 6px circles</div>
+  <div>● <strong style="color:#9db4f0">Stat columns</strong>: Roboto Mono for digit alignment — MP/W/D/L/GD/Pts</div>
+  <div>● <strong style="color:#9db4f0">GD</strong>: positive=green, negative=red (still passes contrast on dark bg)</div>
+  <div>● <strong style="color:#9db4f0">League strip</strong>: horizontal scroll, pill active state, sticky at top</div>
+  <div>● <strong style="color:#9db4f0">Table header</strong>: sticky below league strip + round bar</div>
+  <div>● <strong style="color:#9db4f0">Pos arrows</strong>: ↑ green = moved up, ↓ red = dropped, — gray = same</div>
+  <div>● <strong style="color:#9db4f0">Row tap</strong>: navigates to team detail screen (fixtures, squad, form)</div>
+  <div style="margin-top:10px;color:#3d4f7c;">All 20 PL teams shown. 44px row height meets touch target requirement.</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>Quick Score – Live Scores</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:     #0D1117;
+    --bg-surface:     #161B22;
+    --bg-surface-alt: #1C2128;
+    --bg-elevated:    #21262D;
+    --border:         #30363D;
+    --border-subtle:  #21262D;
+    --text-primary:   #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-muted:     #484F58;
+    --accent-live:    #00C853;
+    --accent-live-dim:rgba(0,200,83,0.10);
+    --accent-danger:  #FF3D3D;
+    --accent-warning: #FFB300;
+    --accent-blue:    #2196F3;
+    --accent-blue-dim:rgba(33,150,243,0.12);
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Roboto Mono', 'SF Mono', monospace;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap');
+
+  body {
+    font-family: var(--font-main);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    width: 375px;
+    min-height: 812px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+    font-size: 14px;
+  }
+
+  /* ── Status Bar ───────────────────────────────────────────── */
+  .status-bar {
+    height: 44px;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .status-bar .time {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .status-bar .indicators {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-bar .indicators svg {
+    fill: var(--text-primary);
+  }
+
+  /* ── Top App Bar ──────────────────────────────────────────── */
+  .app-bar {
+    background: var(--bg-primary);
+    padding: 8px 16px 0;
+    position: sticky;
+    top: 44px;
+    z-index: 40;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .app-bar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+  }
+  .app-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .app-title span { color: var(--accent-live); }
+  .app-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 200ms ease;
+  }
+  .icon-btn:hover { background: var(--bg-surface-alt); }
+
+  /* ── Date Filter Strip ────────────────────────────────────── */
+  .date-strip {
+    background: var(--bg-primary);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .date-strip::-webkit-scrollbar { display: none; }
+  .date-pill {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    min-width: 52px;
+    transition: background 200ms ease;
+  }
+  .date-pill .day-name {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .date-pill .day-num {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+  .date-pill.active {
+    background: var(--accent-blue);
+  }
+  .date-pill.active .day-name,
+  .date-pill.active .day-num { color: #fff; }
+  .date-pill:not(.active):hover { background: var(--bg-surface-alt); }
+  .date-pill.today .day-num { color: var(--text-primary); }
+
+  /* Live Matches Summary Bar */
+  .live-summary {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-live);
+    flex-shrink: 0;
+    animation: live-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes live-pulse {
+    0%   { opacity: 1;   transform: scale(1); }
+    50%  { opacity: 0.4; transform: scale(1.6); }
+    100% { opacity: 1;   transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+  }
+  .live-summary-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent-live);
+  }
+  .live-summary-text span {
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  /* ── Match Feed ───────────────────────────────────────────── */
+  .feed {
+    flex: 1;
+    padding-bottom: 72px; /* bottom tab height */
+  }
+
+  /* ── Competition Section ──────────────────────────────────── */
+  .competition-header {
+    background: var(--bg-surface);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    gap: 8px;
+    position: sticky;
+    top: 188px; /* status + appbar + datestrip + livebar */
+    z-index: 10;
+  }
+  .competition-flag {
+    width: 18px;
+    height: 13px;
+    border-radius: 2px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  /* Flag placeholders */
+  .flag-en { background: linear-gradient(#012169 33%, #fff 33%, #fff 50%, #C8102E 50%); }
+  .flag-es { background: linear-gradient(#AA151B 25%, #F1BF00 25%, #F1BF00 75%, #AA151B 75%); }
+  .flag-de { background: linear-gradient(#000 33%, #D00 33%, #D00 67%, #FFCE00 67%); }
+  .flag-it { background: linear-gradient(90deg, #009246 33%, #fff 33%, #fff 67%, #CE2B37 67%); }
+  .flag-fr { background: linear-gradient(90deg, #002395 33%, #fff 33%, #fff 67%, #ED2939 67%); }
+  .flag-eu { background: #003399; }
+
+  .competition-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+  .competition-live-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-live);
+    margin-right: 4px;
+  }
+  .competition-chevron {
+    color: var(--text-muted);
+    transition: transform 250ms ease;
+  }
+  .competition-header.collapsed .competition-chevron {
+    transform: rotate(-90deg);
+  }
+
+  /* ── Match Card ───────────────────────────────────────────── */
+  .match-card {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 64px;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+  .match-card:hover { background: var(--bg-surface-alt); }
+  .match-card.live { background: var(--accent-live-dim); }
+  .match-card.live:hover { background: rgba(0,200,83,0.16); }
+
+  .match-row {
+    display: flex;
+    align-items: center;
+    height: 28px;
+  }
+  .team-crest {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    margin-right: 8px;
+  }
+  .team-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .team-name.scorer { font-weight: 600; }
+  .team-score {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 28px;
+    text-align: center;
+    margin-left: 8px;
+  }
+  .team-score.updated {
+    animation: goal-flash 1.2s ease-out forwards;
+  }
+  @keyframes goal-flash {
+    0%   { color: var(--text-primary); }
+    20%  { color: var(--accent-goal); }
+    100% { color: var(--text-primary); }
+  }
+
+  /* Match meta row (time, events) */
+  .match-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0 4px 32px; /* indent under crest */
+  }
+  .match-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent-live);
+    min-width: 28px;
+  }
+  .match-time.scheduled {
+    color: var(--text-secondary);
+  }
+  .match-time.finished {
+    color: var(--text-muted);
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .live-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-live);
+    animation: live-pulse 1.5s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-badge-dot { animation: none; }
+  }
+  .live-badge-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent-live);
+    letter-spacing: 0.5px;
+  }
+
+  /* Card pill indicators */
+  .event-pills {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+  }
+  .card-pill {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #fff;
+  }
+  .card-pill.yellow { background: var(--accent-warning); }
+  .card-pill.red    { background: var(--accent-danger); }
+  .card-pill.goal   {
+    background: var(--accent-live);
+    color: #000;
+    font-size: 9px;
+  }
+
+  /* Half time / FT tags */
+  .match-status-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+  .match-status-tag.ht { color: var(--accent-warning); }
+
+  /* ── Annotation Labels ────────────────────────────────────── */
+  .annotation {
+    position: relative;
+  }
+  .ann-label {
+    position: absolute;
+    right: -130px;
+    background: #1a1f2e;
+    border: 1px solid #3d4663;
+    color: #7b8cde;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    font-family: var(--font-mono);
+  }
+  .ann-line {
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    width: 14px;
+    height: 1px;
+    background: #3d4663;
+  }
+
+  /* ── Bottom Tab Bar ───────────────────────────────────────── */
+  .bottom-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 375px;
+    height: 56px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    z-index: 100;
+    padding-bottom: 0; /* adjust for safe area in real app */
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    position: relative;
+    color: var(--text-muted);
+    transition: color 200ms ease;
+    min-height: 44px;
+  }
+  .tab-item.active { color: var(--accent-blue); }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  .tab-badge {
+    position: absolute;
+    top: 6px;
+    right: calc(50% - 14px);
+    background: var(--accent-live);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+  }
+
+  /* ── Wireframe annotation sidebar ────────────────────────── */
+  .wireframe-wrapper {
+    position: relative;
+    width: 375px;
+    margin: 0 auto;
+  }
+  .sidebar-note {
+    position: absolute;
+    left: 383px;
+    background: #0a0e1a;
+    border: 1px solid #2a3050;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: #6b7db3;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    max-width: 200px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  .sidebar-note::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    border-right-color: #2a3050;
+  }
+
+  /* Team crest colors (demo) */
+  .crest-mancity  { background: #97C1E7; }
+  .crest-arsenal  { background: #EF0107; }
+  .crest-liverpool{ background: #C8102E; }
+  .crest-chelsea  { background: #034694; }
+  .crest-spurs    { background: #132257; }
+  .crest-manu     { background: #DA020E; }
+  .crest-newcastle{ background: #241F20; border: 1px solid #444; }
+  .crest-aston    { background: #95BFE5; }
+  .crest-brentford{ background: #E30613; }
+  .crest-wolves   { background: #FDB913; }
+  .crest-realmadrid{ background: #FABE00; }
+  .crest-barca    { background: #A50044; }
+  .crest-atletico { background: #CB3524; }
+  .crest-dortmund { background: #FDE100; }
+  .crest-bayern   { background: #DC052D; }
+
+  /* Scrollable content note */
+  .scroll-indicator {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-top: 1px dashed var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wireframe-wrapper">
+
+  <!-- ══ STATUS BAR ══════════════════════════════════════════ -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="indicators">
+      <!-- Signal bars -->
+      <svg width="17" height="12" viewBox="0 0 17 12">
+        <rect x="0" y="6" width="3" height="6" fill="#E6EDF3"/>
+        <rect x="4.5" y="4" width="3" height="8" fill="#E6EDF3"/>
+        <rect x="9" y="2" width="3" height="10" fill="#E6EDF3"/>
+        <rect x="13.5" y="0" width="3" height="12" fill="#E6EDF3"/>
+      </svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <path d="M8 2.4C10.7 2.4 13.1 3.5 14.8 5.3L16 4C13.9 1.8 11.1 0.5 8 0.5C4.9 0.5 2.1 1.8 0 4L1.2 5.3C2.9 3.5 5.3 2.4 8 2.4Z" fill="#E6EDF3"/>
+        <path d="M8 5.6C9.9 5.6 11.6 6.4 12.8 7.7L14 6.4C12.5 4.8 10.4 3.8 8 3.8C5.6 3.8 3.5 4.8 2 6.4L3.2 7.7C4.4 6.4 6.1 5.6 8 5.6Z" fill="#E6EDF3"/>
+        <circle cx="8" cy="10.5" r="1.5" fill="#E6EDF3"/>
+      </svg>
+      <!-- Battery -->
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#E6EDF3" stroke-opacity="0.35"/>
+        <rect x="2" y="2" width="16" height="8" rx="2" fill="#E6EDF3"/>
+        <path d="M23 4V8C23.8 7.7 24.5 6.9 24.5 6C24.5 5.1 23.8 4.3 23 4Z" fill="#E6EDF3" fill-opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══ APP BAR ════════════════════════════════════════════ -->
+  <div class="app-bar">
+    <div class="app-bar-row">
+      <span class="app-title">Quick<span>Score</span></span>
+      <div class="app-bar-actions">
+        <div class="icon-btn" title="Search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+        <div class="icon-btn" title="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DATE FILTER STRIP ══════════════════════════════════ -->
+  <div class="date-strip">
+    <div class="date-pill">
+      <span class="day-name">Thu</span>
+      <span class="day-num">13</span>
+    </div>
+    <div class="date-pill">
+      <span class="day-name">Fri</span>
+      <span class="day-num">14</span>
+    </div>
+    <div class="date-pill">
+      <span class="day-name">Sat</span>
+      <span class="day-num">15</span>
+    </div>
+    <div class="date-pill active">
+      <span class="day-name">Today</span>
+      <span class="day-num">16</span>
+    </div>
+    <div class="date-pill">
+      <span class="day-name">Mon</span>
+      <span class="day-num">17</span>
+    </div>
+    <div class="date-pill">
+      <span class="day-name">Tue</span>
+      <span class="day-num">18</span>
+    </div>
+    <div class="date-pill">
+      <span class="day-name">Wed</span>
+      <span class="day-num">19</span>
+    </div>
+  </div>
+
+  <!-- Live summary bar -->
+  <div class="live-summary">
+    <div class="live-dot"></div>
+    <div class="live-summary-text">
+      14 Live matches
+      <span>across 6 competitions</span>
+    </div>
+  </div>
+
+  <!-- ══ MATCH FEED ═════════════════════════════════════════ -->
+  <div class="feed">
+
+    <!-- ─── PREMIER LEAGUE ─────────────────────────────────── -->
+    <div class="competition-header">
+      <div class="competition-flag flag-en" style="width:18px;height:13px;border-radius:2px;"></div>
+      <span class="competition-name">Premier League</span>
+      <span class="competition-live-count">5 live</span>
+      <svg class="competition-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- Match 1: Arsenal vs Man City — LIVE 67' -->
+    <div class="match-card live">
+      <div class="match-row">
+        <div class="team-crest crest-arsenal">ARS</div>
+        <span class="team-name scorer">Arsenal</span>
+        <span class="team-score">2</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time">67'</span>
+        <div class="live-badge">
+          <div class="live-badge-dot"></div>
+          <span class="live-badge-text">LIVE</span>
+        </div>
+        <div class="event-pills">
+          <span class="card-pill yellow">YC ×2</span>
+        </div>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-mancity">MC</div>
+        <span class="team-name">Man City</span>
+        <span class="team-score">1</span>
+      </div>
+    </div>
+
+    <!-- Match 2: Liverpool vs Chelsea — LIVE 43' (HT approaching) -->
+    <div class="match-card live">
+      <div class="match-row">
+        <div class="team-crest crest-liverpool">LIV</div>
+        <span class="team-name">Liverpool</span>
+        <span class="team-score">1</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time">43'</span>
+        <div class="live-badge">
+          <div class="live-badge-dot"></div>
+          <span class="live-badge-text">LIVE</span>
+        </div>
+        <div class="event-pills">
+          <span class="card-pill red">RC</span>
+        </div>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-chelsea">CHE</div>
+        <span class="team-name scorer">Chelsea</span>
+        <span class="team-score">1</span>
+      </div>
+    </div>
+
+    <!-- Match 3: Spurs vs Man United — HT -->
+    <div class="match-card live">
+      <div class="match-row">
+        <div class="team-crest crest-spurs">TOT</div>
+        <span class="team-name">Tottenham</span>
+        <span class="team-score">0</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-status-tag ht">HT</span>
+        <div class="event-pills">
+          <span class="card-pill yellow">YC</span>
+        </div>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-manu">MU</div>
+        <span class="team-name">Man United</span>
+        <span class="team-score">0</span>
+      </div>
+    </div>
+
+    <!-- Match 4: Newcastle vs Aston Villa — Scheduled 17:30 -->
+    <div class="match-card">
+      <div class="match-row">
+        <div class="team-crest crest-newcastle">NEW</div>
+        <span class="team-name">Newcastle</span>
+        <span class="team-score" style="color:var(--text-muted)">–</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time scheduled">17:30</span>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-aston">AVL</div>
+        <span class="team-name">Aston Villa</span>
+        <span class="team-score" style="color:var(--text-muted)">–</span>
+      </div>
+    </div>
+
+    <!-- Match 5: Brentford vs Wolves — FT -->
+    <div class="match-card">
+      <div class="match-row">
+        <div class="team-crest crest-brentford">BRE</div>
+        <span class="team-name scorer">Brentford</span>
+        <span class="team-score">2</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-status-tag">FT</span>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-wolves">WOL</div>
+        <span class="team-name">Wolves</span>
+        <span class="team-score">0</span>
+      </div>
+    </div>
+
+    <!-- ─── LA LIGA ──────────────────────────────────────────── -->
+    <div class="competition-header">
+      <div class="competition-flag flag-es" style="width:18px;height:13px;border-radius:2px;"></div>
+      <span class="competition-name">La Liga</span>
+      <span class="competition-live-count">3 live</span>
+      <svg class="competition-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- Real Madrid vs Barcelona — LIVE 78' -->
+    <div class="match-card live">
+      <div class="match-row">
+        <div class="team-crest crest-realmadrid" style="color:#000;">RM</div>
+        <span class="team-name scorer">Real Madrid</span>
+        <span class="team-score">3</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time">78'</span>
+        <div class="live-badge">
+          <div class="live-badge-dot"></div>
+          <span class="live-badge-text">LIVE</span>
+        </div>
+        <div class="event-pills">
+          <span class="card-pill goal">⚽ ×2</span>
+          <span class="card-pill red">RC</span>
+        </div>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-barca">BAR</div>
+        <span class="team-name">Barcelona</span>
+        <span class="team-score">2</span>
+      </div>
+    </div>
+
+    <!-- Atletico Madrid vs Villarreal — Scheduled 20:00 -->
+    <div class="match-card">
+      <div class="match-row">
+        <div class="team-crest crest-atletico">ATM</div>
+        <span class="team-name">Atl. Madrid</span>
+        <span class="team-score" style="color:var(--text-muted)">–</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time scheduled">20:00</span>
+      </div>
+      <div class="match-row">
+        <div class="team-crest" style="background:#FFD700;color:#000;">VIL</div>
+        <span class="team-name">Villarreal</span>
+        <span class="team-score" style="color:var(--text-muted)">–</span>
+      </div>
+    </div>
+
+    <!-- ─── BUNDESLIGA ───────────────────────────────────────── -->
+    <div class="competition-header">
+      <div class="competition-flag flag-de" style="width:18px;height:13px;border-radius:2px;"></div>
+      <span class="competition-name">Bundesliga</span>
+      <span class="competition-live-count">2 live</span>
+      <svg class="competition-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- Bayern vs Dortmund — LIVE 55' -->
+    <div class="match-card live">
+      <div class="match-row">
+        <div class="team-crest crest-bayern">FCB</div>
+        <span class="team-name scorer">Bayern Munich</span>
+        <span class="team-score">2</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time">55'</span>
+        <div class="live-badge">
+          <div class="live-badge-dot"></div>
+          <span class="live-badge-text">LIVE</span>
+        </div>
+      </div>
+      <div class="match-row">
+        <div class="team-crest crest-dortmund" style="color:#000;">BVB</div>
+        <span class="team-name">B. Dortmund</span>
+        <span class="team-score">1</span>
+      </div>
+    </div>
+
+    <!-- UEFA Champions League -->
+    <div class="competition-header">
+      <div class="competition-flag flag-eu" style="width:18px;height:13px;border-radius:2px;"></div>
+      <span class="competition-name">Champions League</span>
+      <span class="competition-live-count">4 live</span>
+      <svg class="competition-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- Arsenal vs PSG -->
+    <div class="match-card live">
+      <div class="match-row">
+        <div class="team-crest crest-arsenal">ARS</div>
+        <span class="team-name">Arsenal</span>
+        <span class="team-score">1</span>
+      </div>
+      <div class="match-meta">
+        <span class="match-time">34'</span>
+        <div class="live-badge">
+          <div class="live-badge-dot"></div>
+          <span class="live-badge-text">LIVE</span>
+        </div>
+      </div>
+      <div class="match-row">
+        <div class="team-crest" style="background:#004170;">PSG</div>
+        <span class="team-name scorer">Paris SG</span>
+        <span class="team-score">1</span>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      Scroll for more competitions
+    </div>
+
+  </div><!-- /feed -->
+
+  <!-- ══ BOTTOM TAB BAR ════════════════════════════════════ -->
+  <div class="bottom-tabs">
+
+    <!-- Scores (active) -->
+    <div class="tab-item active">
+      <div class="tab-badge">14</div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4l3 3"/>
+      </svg>
+      <span class="tab-label">Scores</span>
+    </div>
+
+    <!-- Fixtures -->
+    <div class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span class="tab-label">Fixtures</span>
+    </div>
+
+    <!-- Standings -->
+    <div class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      <span class="tab-label">Standings</span>
+    </div>
+
+    <!-- Favorites -->
+    <div class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      <span class="tab-label">Favorites</span>
+    </div>
+
+    <!-- Settings -->
+    <div class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span class="tab-label">Settings</span>
+    </div>
+
+  </div>
+
+  <!-- ══ DESIGN ANNOTATIONS ═════════════════════════════════ -->
+  <div style="background:#080c18;border-top:2px solid #1e2d5a;padding:20px;font-family:var(--font-mono);font-size:11px;color:#5a6a9a;line-height:1.8;margin-top:0;">
+    <div style="color:#7b8cde;font-size:13px;font-weight:600;margin-bottom:12px;">Wireframe: Live Scores – Key Patterns</div>
+    <div>● <strong style="color:#9db4f0">Date Strip</strong>: horizontally scrollable, snaps to center, 56px height</div>
+    <div>● <strong style="color:#9db4f0">Live row tint</strong>: rgba(0,200,83,0.10) on live match cards</div>
+    <div>● <strong style="color:#9db4f0">Live dot</strong>: 8px circle, keyframe pulse 1.5s ease-in-out infinite</div>
+    <div>● <strong style="color:#9db4f0">Score font</strong>: Roboto Mono 18px/700 — digit alignment guaranteed</div>
+    <div>● <strong style="color:#9db4f0">Competition headers</strong>: sticky, 40px, collapsible with chevron rotation</div>
+    <div>● <strong style="color:#9db4f0">Card pills</strong>: YC=#FFB300, RC=#FF3D3D, Goal=#00C853, 10px/700</div>
+    <div>● <strong style="color:#9db4f0">Match card tap target</strong>: min-height 64px, full width</div>
+    <div>● <strong style="color:#9db4f0">Tab badge</strong>: live match count — green bg, black text, 9px</div>
+    <div>● <strong style="color:#9db4f0">14 badge</strong>: shows total live matches across all competitions</div>
+    <div style="margin-top:10px;color:#3d4f7c;">FotMob/Flashscore competitor pattern — information-dense, no wasted space</div>
+  </div>
+
+</div><!-- /wireframe-wrapper -->
+
+</body>
+</html>

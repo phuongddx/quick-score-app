@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>Quick Score – Favorites</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:     #0D1117;
+    --bg-surface:     #161B22;
+    --bg-surface-alt: #1C2128;
+    --bg-elevated:    #21262D;
+    --border:         #30363D;
+    --border-subtle:  #21262D;
+    --text-primary:   #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-muted:     #484F58;
+    --accent-live:    #00C853;
+    --accent-live-dim:rgba(0,200,83,0.10);
+    --accent-danger:  #FF3D3D;
+    --accent-warning: #FFB300;
+    --accent-blue:    #2196F3;
+    --accent-blue-dim:rgba(33,150,243,0.10);
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Roboto Mono', 'SF Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-main);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    width: 375px;
+    margin: 0 auto;
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+
+  /* ── Status Bar ─────────────────────────────────────────── */
+  .status-bar {
+    height: 44px;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 600; }
+
+  /* ── App Bar ─────────────────────────────────────────────── */
+  .app-bar {
+    height: 52px;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 8px;
+  }
+  .app-bar-title { font-size: 20px; font-weight: 700; flex: 1; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); cursor: pointer;
+    border-radius: 50%;
+    transition: background 200ms;
+  }
+  .icon-btn:hover { background: var(--bg-surface-alt); }
+
+  /* ── Segment Control: Teams / Competitions ───────────────── */
+  .segment-bar {
+    background: var(--bg-surface);
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .segment-control {
+    display: flex;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .segment-btn {
+    flex: 1;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .segment-btn.active {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+
+  /* ── Main feed ───────────────────────────────────────────── */
+  .feed { padding-bottom: 72px; }
+
+  /* ── Section header ──────────────────────────────────────── */
+  .section-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 6px;
+  }
+  .section-hdr-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .section-hdr-action {
+    font-size: 12px;
+    color: var(--accent-blue);
+    cursor: pointer;
+  }
+
+  /* ── Live Scores Banner (pinned at top for saved teams) ───── */
+  .live-banner {
+    background: var(--bg-surface);
+    margin: 0 12px 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+  }
+  .live-banner-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(0,200,83,0.06);
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-live);
+    animation: live-pulse 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes live-pulse {
+    0%   { opacity: 1; transform: scale(1); }
+    50%  { opacity: 0.4; transform: scale(1.6); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+  }
+  .live-banner-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-live);
+    flex: 1;
+  }
+  .live-banner-count {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Compact live match row inside banner */
+  .live-match-mini {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background 150ms;
+    gap: 8px;
+  }
+  .live-match-mini:last-child { border-bottom: none; }
+  .live-match-mini:hover { background: var(--bg-surface-alt); }
+
+  .mini-teams {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .mini-team-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mini-crest {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .mini-team-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .mini-score {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 16px;
+    text-align: center;
+  }
+  .mini-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent-live);
+    min-width: 28px;
+    text-align: center;
+  }
+
+  /* ── Favorite Team Card ──────────────────────────────────── */
+  .team-card {
+    background: var(--bg-surface);
+    margin: 0 12px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 200ms;
+  }
+  .team-card:hover { border-color: var(--border); }
+
+  /* Team card header */
+  .team-card-header {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 12px;
+  }
+  .team-crest-lg {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .team-card-info { flex: 1; }
+  .team-card-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .team-card-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .team-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .heart-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border-radius: 50%;
+    transition: all 200ms;
+    color: var(--accent-danger);
+  }
+  .heart-btn:hover { background: rgba(255,61,61,0.1); }
+  .heart-btn svg { width: 20px; height: 20px; }
+
+  /* Next match strip */
+  .team-next-match {
+    border-top: 1px solid var(--border-subtle);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface-alt);
+  }
+  .next-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    min-width: 30px;
+  }
+  .next-match-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .next-vs {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .next-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .next-crest {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+
+  /* Form row */
+  .team-form-row {
+    border-top: 1px solid var(--border-subtle);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    min-width: 30px;
+  }
+  .form-dots {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+  }
+  .form-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700;
+  }
+  .form-w { background: var(--accent-live); color: #000; }
+  .form-d { background: var(--accent-warning); color: #000; }
+  .form-l { background: var(--accent-danger); color: #fff; }
+
+  /* Standing position badge */
+  .position-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .pos-indicator {
+    width: 8px; height: 8px; border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Competition Card ────────────────────────────────────── */
+  .comp-card {
+    background: var(--bg-surface);
+    margin: 0 12px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 200ms;
+  }
+  .comp-card:hover { border-color: var(--border); }
+
+  .comp-card-header {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 12px;
+  }
+  .comp-icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .comp-card-info { flex: 1; }
+  .comp-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .comp-card-country {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Leader row inside comp card */
+  .comp-leader {
+    border-top: 1px solid var(--border-subtle);
+    padding: 8px 12px;
+    background: var(--bg-surface-alt);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comp-leader-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    min-width: 30px;
+  }
+  .comp-leader-team {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .comp-leader-pts {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* ── Empty State ─────────────────────────────────────────── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+    gap: 16px;
+    text-align: center;
+  }
+  .empty-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+  }
+  .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .empty-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 260px;
+  }
+  .empty-cta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-blue);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 22px;
+    cursor: pointer;
+    transition: opacity 200ms;
+  }
+  .empty-cta:hover { opacity: 0.88; }
+
+  /* ── Add Favorites CTA ───────────────────────────────────── */
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 12px 8px;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    transition: all 200ms;
+  }
+  .add-row:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: var(--accent-blue-dim);
+  }
+  .add-row svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ── Bottom Tab Bar ──────────────────────────────────────── */
+  .bottom-tabs {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 375px; height: 56px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: stretch;
+    z-index: 100;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; cursor: pointer;
+    color: var(--text-muted); min-height: 44px;
+    transition: color 200ms;
+  }
+  .tab-item.active { color: var(--accent-blue); }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-label { font-size: 10px; font-weight: 500; }
+
+  /* Crests */
+  .c-arsenal   { background: #EF0107; }
+  .c-mancity   { background: #97C1E7; color: #000 !important; }
+  .c-liverpool { background: #C8102E; }
+  .c-chelsea   { background: #034694; }
+  .c-spurs     { background: #132257; }
+  .c-manu      { background: #DA020E; }
+  .c-barca     { background: #A50044; }
+  .c-realmadrid { background: #FABE00; color: #000 !important; }
+  .c-psg       { background: #004170; }
+  .c-dortmund  { background: #FDE100; color: #000 !important; }
+
+  .annotation-block {
+    background: #080c18;
+    border-top: 2px solid #1e2d5a;
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5a6a9a;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ STATUS BAR ══════════════════════════════════════════ -->
+<div class="status-bar">
+  <span class="time">9:41</span>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="6" width="3" height="6" fill="#E6EDF3"/><rect x="4.5" y="4" width="3" height="8" fill="#E6EDF3"/><rect x="9" y="2" width="3" height="10" fill="#E6EDF3"/><rect x="13.5" y="0" width="3" height="12" fill="#E6EDF3"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#E6EDF3" stroke-opacity="0.35"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#E6EDF3"/></svg>
+  </div>
+</div>
+
+<!-- ══ APP BAR ══════════════════════════════════════════════ -->
+<div class="app-bar">
+  <span class="app-bar-title">Favorites</span>
+  <div class="icon-btn" title="Search">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  </div>
+  <div class="icon-btn" title="Edit">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  </div>
+</div>
+
+<!-- ══ SEGMENT CONTROL ══════════════════════════════════════ -->
+<div class="segment-bar">
+  <div class="segment-control">
+    <div class="segment-btn active">Teams</div>
+    <div class="segment-btn">Competitions</div>
+    <div class="segment-btn">Players</div>
+  </div>
+</div>
+
+<!-- ══ CONTENT: TEAMS TAB ═══════════════════════════════════ -->
+<div class="feed">
+
+  <!-- ── Live scores for saved teams ──────────────────────── -->
+  <div class="section-hdr">
+    <span class="section-hdr-title">Live Now</span>
+  </div>
+
+  <div class="live-banner">
+    <div class="live-banner-header">
+      <div class="live-dot"></div>
+      <span class="live-banner-label">Your teams are playing</span>
+      <span class="live-banner-count">2 matches</span>
+    </div>
+
+    <!-- Arsenal vs Man City -->
+    <div class="live-match-mini">
+      <span class="mini-time">67'</span>
+      <div class="mini-teams">
+        <div class="mini-team-row">
+          <div class="mini-crest c-arsenal">ARS</div>
+          <span class="mini-team-name" style="font-weight:600;">Arsenal</span>
+          <span class="mini-score">2</span>
+        </div>
+        <div class="mini-team-row">
+          <div class="mini-crest c-mancity">MC</div>
+          <span class="mini-team-name">Man City</span>
+          <span class="mini-score" style="color:var(--text-secondary);">1</span>
+        </div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+
+    <!-- Chelsea vs Liverpool -->
+    <div class="live-match-mini">
+      <span class="mini-time">43'</span>
+      <div class="mini-teams">
+        <div class="mini-team-row">
+          <div class="mini-crest c-chelsea">CHE</div>
+          <span class="mini-team-name">Chelsea</span>
+          <span class="mini-score" style="color:var(--text-secondary);">1</span>
+        </div>
+        <div class="mini-team-row">
+          <div class="mini-crest c-liverpool">LIV</div>
+          <span class="mini-team-name" style="font-weight:600;">Liverpool</span>
+          <span class="mini-score">1</span>
+        </div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+
+  <!-- ── Saved Teams ────────────────────────────────────────── -->
+  <div class="section-hdr">
+    <span class="section-hdr-title">My Teams</span>
+    <span class="section-hdr-action">Edit</span>
+  </div>
+
+  <!-- Arsenal card -->
+  <div class="team-card">
+    <div class="team-card-header">
+      <div class="team-crest-lg c-arsenal">ARS</div>
+      <div class="team-card-info">
+        <div class="team-card-name">Arsenal</div>
+        <div class="team-card-meta">Premier League · 2nd · 57 pts</div>
+      </div>
+      <div class="team-card-actions">
+        <div class="position-badge">
+          <div class="pos-indicator" style="background:var(--accent-live);"></div>
+          CL
+        </div>
+        <div class="heart-btn" title="Remove from favorites">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+      </div>
+    </div>
+    <!-- Form -->
+    <div class="team-form-row">
+      <span class="form-label">Form</span>
+      <div class="form-dots">
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-l">L</div>
+        <div class="form-dot form-w">W</div>
+      </div>
+      <!-- Live now indicator -->
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div class="live-dot" style="width:6px;height:6px;"></div>
+        <span style="font-size:10px;color:var(--accent-live);font-weight:600;">LIVE 67'</span>
+      </div>
+    </div>
+    <!-- Next match -->
+    <div class="team-next-match">
+      <span class="next-label">Next</span>
+      <div class="next-match-info">
+        <div class="next-crest c-psg">PSG</div>
+        <span>vs Paris SG</span>
+        <span class="next-vs">· UCL R16</span>
+      </div>
+      <span class="next-time">Sun 16 Feb 20:00</span>
+    </div>
+  </div>
+
+  <!-- Liverpool card -->
+  <div class="team-card">
+    <div class="team-card-header">
+      <div class="team-crest-lg c-liverpool">LIV</div>
+      <div class="team-card-info">
+        <div class="team-card-name">Liverpool</div>
+        <div class="team-card-meta">Premier League · 1st · 62 pts</div>
+      </div>
+      <div class="team-card-actions">
+        <div class="position-badge">
+          <div class="pos-indicator" style="background:var(--accent-live);"></div>
+          CL
+        </div>
+        <div class="heart-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="team-form-row">
+      <span class="form-label">Form</span>
+      <div class="form-dots">
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-d">D</div>
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-w">W</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div class="live-dot" style="width:6px;height:6px;"></div>
+        <span style="font-size:10px;color:var(--accent-live);font-weight:600;">LIVE 43'</span>
+      </div>
+    </div>
+    <div class="team-next-match">
+      <span class="next-label">Next</span>
+      <div class="next-match-info">
+        <div class="next-crest c-manu">MU</div>
+        <span>vs Man United</span>
+        <span class="next-vs">· PL GW28</span>
+      </div>
+      <span class="next-time">Sat 22 Feb 12:30</span>
+    </div>
+  </div>
+
+  <!-- Chelsea card -->
+  <div class="team-card">
+    <div class="team-card-header">
+      <div class="team-crest-lg c-chelsea">CHE</div>
+      <div class="team-card-info">
+        <div class="team-card-name">Chelsea</div>
+        <div class="team-card-meta">Premier League · 4th · 49 pts</div>
+      </div>
+      <div class="team-card-actions">
+        <div class="position-badge">
+          <div class="pos-indicator" style="background:var(--accent-live);"></div>
+          CL
+        </div>
+        <div class="heart-btn">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="team-form-row">
+      <span class="form-label">Form</span>
+      <div class="form-dots">
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-d">D</div>
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-w">W</div>
+        <div class="form-dot form-d">D</div>
+      </div>
+    </div>
+    <div class="team-next-match">
+      <span class="next-label">Next</span>
+      <div class="next-match-info">
+        <div class="next-crest c-spurs" style="background:#132257;">TOT</div>
+        <span>vs Tottenham</span>
+        <span class="next-vs">· PL GW28</span>
+      </div>
+      <span class="next-time">Sun 23 Feb 16:30</span>
+    </div>
+  </div>
+
+  <!-- ── Followed Competitions ─────────────────────────────── -->
+  <div class="section-hdr" style="margin-top:8px;">
+    <span class="section-hdr-title">My Competitions</span>
+    <span class="section-hdr-action">Edit</span>
+  </div>
+
+  <!-- Premier League comp card -->
+  <div class="comp-card">
+    <div class="comp-card-header">
+      <div class="comp-icon" style="background:linear-gradient(135deg,#3D195B,#00C2A8);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="comp-card-info">
+        <div class="comp-card-name">Premier League</div>
+        <div class="comp-card-country">England · GW 27 of 38</div>
+      </div>
+      <div class="heart-btn" style="color:var(--accent-danger);">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </div>
+    </div>
+    <div class="comp-leader">
+      <span class="comp-leader-label">Top</span>
+      <div class="comp-leader-team">
+        <div class="next-crest c-liverpool">LIV</div>
+        Liverpool
+      </div>
+      <span class="comp-leader-pts">62 pts</span>
+    </div>
+  </div>
+
+  <!-- Champions League comp card -->
+  <div class="comp-card">
+    <div class="comp-card-header">
+      <div class="comp-icon" style="background:linear-gradient(135deg,#003399,#1a1a6e);">
+        <!-- UCL star icon -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFD700" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div class="comp-card-info">
+        <div class="comp-card-name">Champions League</div>
+        <div class="comp-card-country">Europe · Round of 16</div>
+      </div>
+      <div class="heart-btn" style="color:var(--accent-danger);">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </div>
+    </div>
+    <div class="comp-leader">
+      <span class="comp-leader-label">Next</span>
+      <div class="comp-leader-team">
+        Real Madrid vs Man City, PSG vs Arsenal
+      </div>
+      <span class="next-time" style="font-size:10px;">Sun 16</span>
+    </div>
+  </div>
+
+  <!-- Add more -->
+  <div class="add-row">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Add team or competition
+  </div>
+
+  <!-- ── Notification Preferences CTA ──────────────────────── -->
+  <div style="margin: 4px 12px 0; background:var(--bg-surface); border-radius:10px; border:1px solid var(--border-subtle); padding:12px; display:flex; align-items:center; gap:10px; cursor:pointer;">
+    <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-blue-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Push Notifications</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Goals, red cards, match start</div>
+    </div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
+
+</div><!-- /feed -->
+
+<!-- ══ BOTTOM TABS ════════════════════════════════════════ -->
+<div class="bottom-tabs">
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <span class="tab-label">Scores</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="tab-label">Fixtures</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="tab-label">Standings</span>
+  </div>
+  <div class="tab-item active">
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span class="tab-label">Favorites</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="tab-label">Settings</span>
+  </div>
+</div>
+
+<!-- ══ ANNOTATIONS ════════════════════════════════════════ -->
+<div class="annotation-block">
+  <div style="color:#7b8cde;font-size:13px;font-weight:600;margin-bottom:12px;">Wireframe: Favorites – Key Patterns</div>
+  <div>● <strong style="color:#9db4f0">Live banner</strong>: pinned at top when saved teams are playing — auto-shows/hides</div>
+  <div>● <strong style="color:#9db4f0">Segment control</strong>: Teams / Competitions / Players — iOS-style pill switcher</div>
+  <div>● <strong style="color:#9db4f0">Team card</strong>: crest + name + position + league zone badge + filled heart</div>
+  <div>● <strong style="color:#9db4f0">Form dots</strong>: W/D/L circles, 20px, larger than standings (more space)</div>
+  <div>● <strong style="color:#9db4f0">Live indicator</strong>: pulsing dot + minute on form row if team currently playing</div>
+  <div>● <strong style="color:#9db4f0">Next match strip</strong>: opponent crest + name + competition + date/time</div>
+  <div>● <strong style="color:#9db4f0">Zone badge</strong>: colored dot + "CL/EL/ECL/REL" text next to heart</div>
+  <div>● <strong style="color:#9db4f0">Heart icon</strong>: filled red = saved; tap to remove (confirm dialog in real app)</div>
+  <div>● <strong style="color:#9db4f0">Add row</strong>: dashed border, blue on hover → opens team/comp search</div>
+  <div>● <strong style="color:#9db4f0">Notification CTA</strong>: deep link to per-team push notification settings</div>
+  <div>● <strong style="color:#9db4f0">Edit mode</strong>: long-press or "Edit" link → drag-to-reorder + swipe-to-delete</div>
+  <div style="margin-top:10px;color:#3d4f7c;">Empty state (not shown): centered heart icon + "Follow your first team" CTA button.</div>
+</div>
+
+</body>
+</html>

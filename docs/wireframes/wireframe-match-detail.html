@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>Quick Score – Match Detail</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:     #0D1117;
+    --bg-surface:     #161B22;
+    --bg-surface-alt: #1C2128;
+    --bg-elevated:    #21262D;
+    --border:         #30363D;
+    --border-subtle:  #21262D;
+    --text-primary:   #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-muted:     #484F58;
+    --accent-live:    #00C853;
+    --accent-live-dim:rgba(0,200,83,0.10);
+    --accent-danger:  #FF3D3D;
+    --accent-warning: #FFB300;
+    --accent-blue:    #2196F3;
+    --accent-blue-dim:rgba(33,150,243,0.12);
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Roboto Mono', 'SF Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-main);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    width: 375px;
+    margin: 0 auto;
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+
+  /* ── Status Bar ─────────────────────────────────────────── */
+  .status-bar {
+    height: 44px;
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 600; }
+
+  /* ── Nav Bar ─────────────────────────────────────────────── */
+  .nav-bar {
+    height: 44px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 8px;
+  }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent-blue);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    min-height: 44px;
+  }
+  .nav-title {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .nav-action {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  /* ── Match Hero ──────────────────────────────────────────── */
+  .match-hero {
+    background: var(--bg-surface);
+    padding: 16px 16px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  /* Competition row */
+  .match-competition {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .comp-flag {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    background: linear-gradient(#012169 33%, #fff 33%, #fff 50%, #C8102E 50%);
+  }
+  .comp-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .comp-round {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Score block */
+  .score-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px 16px;
+    gap: 8px;
+  }
+  .team-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .team-crest-lg {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .team-name-lg {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+  }
+
+  .score-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 100px;
+  }
+  .score-display {
+    font-family: var(--font-mono);
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+  .score-sep {
+    color: var(--text-muted);
+    font-size: 36px;
+    margin: 0 2px;
+    font-weight: 300;
+  }
+
+  /* Live status pill */
+  .live-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,200,83,0.15);
+    border: 1px solid rgba(0,200,83,0.3);
+    border-radius: 12px;
+    padding: 3px 10px;
+  }
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-live);
+    animation: live-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes live-pulse {
+    0%   { opacity: 1;   transform: scale(1); }
+    50%  { opacity: 0.4; transform: scale(1.6); }
+    100% { opacity: 1;   transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+  }
+  .live-time {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-live);
+  }
+
+  /* Goal scorers mini */
+  .goal-scorers {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0 12px;
+  }
+  .scorer-list {
+    flex: 1;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .scorer-list.home { text-align: left; padding-right: 60px; }
+  .scorer-list.away { text-align: right; padding-left: 60px; }
+  .scorer-list span { color: var(--text-muted); font-size: 10px; }
+
+  /* ── Tab Strip ───────────────────────────────────────────── */
+  .tab-strip {
+    background: var(--bg-surface);
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 88px;
+    z-index: 30;
+  }
+  .tab-strip-item {
+    flex: 1;
+    padding: 12px 4px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 200ms ease;
+    letter-spacing: 0.3px;
+  }
+  .tab-strip-item.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+  }
+
+  /* ── Content Sections ────────────────────────────────────── */
+  .content-area {
+    padding-bottom: 72px;
+  }
+
+  /* Section label */
+  .section-label {
+    padding: 12px 16px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  /* ── Event Timeline ──────────────────────────────────────── */
+  .timeline {
+    padding: 0 16px;
+  }
+
+  .timeline-event {
+    display: flex;
+    align-items: flex-start;
+    min-height: 40px;
+    position: relative;
+  }
+
+  /* Centre divider line */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: calc(50% - 0.5px);
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-subtle);
+    pointer-events: none;
+  }
+  .timeline { position: relative; }
+
+  .event-home {
+    flex: 1;
+    text-align: right;
+    padding-right: 20px;
+    padding: 8px 20px 8px 0;
+  }
+  .event-away {
+    flex: 1;
+    text-align: left;
+    padding: 8px 0 8px 20px;
+  }
+  .event-minute {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    padding: 2px 4px;
+    border-radius: 3px;
+    z-index: 2;
+  }
+
+  .event-player {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .event-type-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+
+  .event-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 16px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .event-icon.goal  { background: var(--accent-live); color: #000; }
+  .event-icon.yellow { background: var(--accent-warning); color: #000; }
+  .event-icon.red   { background: var(--accent-danger); color: #fff; }
+  .event-icon.sub   { background: var(--bg-elevated); color: var(--text-secondary); }
+  .event-icon-home { margin-left: 4px; }
+  .event-icon-away { margin-right: 4px; }
+
+  /* ── Stats Bars ──────────────────────────────────────────── */
+  .stats-section { padding: 0 16px; }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 8px;
+  }
+  .stat-val {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 32px;
+    text-align: center;
+  }
+  .stat-bar-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .stat-bar-home {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent-blue);
+    flex: var(--home-pct, 50);
+    transition: flex 300ms ease;
+  }
+  .stat-bar-away {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--text-muted);
+    flex: var(--away-pct, 50);
+  }
+  .stat-label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .stat-row-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .stat-name {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  /* ── Lineups ─────────────────────────────────────────────── */
+  .lineup-section {
+    padding: 0 16px;
+  }
+
+  /* Formation pitch */
+  .pitch {
+    background: linear-gradient(180deg, #0a2e0a 0%, #0d3d0d 25%, #0a2e0a 50%, #0d3d0d 75%, #0a2e0a 100%);
+    border-radius: 8px;
+    border: 1px solid #1a4d1a;
+    padding: 16px 8px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  /* Centre line */
+  .pitch::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+  /* Centre circle placeholder */
+  .pitch-centre-circle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .formation-row {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 14px;
+  }
+  .formation-row:last-child { margin-bottom: 0; }
+
+  .player-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+  }
+  .player-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .player-circle.home { background: #EF0107; } /* Arsenal red */
+  .player-circle.away { background: #97C1E7; color: #000; } /* Man City blue */
+  .player-circle.gk   { background: #FF9800; color: #000; }
+  .player-num {
+    font-size: 8px;
+    font-weight: 600;
+    position: absolute;
+    color: rgba(255,255,255,0.7);
+  }
+  .player-name-dot {
+    font-size: 9px;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    max-width: 44px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Bench list */
+  .bench-list {
+    background: var(--bg-surface);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .bench-header {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bench-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .bench-row:last-child { border-bottom: none; }
+  .bench-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 20px;
+  }
+  .bench-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .bench-pos {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    width: 24px;
+    text-align: center;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    padding: 2px 4px;
+  }
+  .sub-in { color: var(--accent-live); font-size: 10px; margin-left: 4px; }
+
+  /* ── Bottom Tab Bar ──────────────────────────────────────── */
+  .bottom-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 375px;
+    height: 56px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    z-index: 100;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    color: var(--text-muted);
+    min-height: 44px;
+  }
+  .tab-item.active { color: var(--accent-blue); }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-label { font-size: 10px; font-weight: 500; }
+
+  /* Crest colors */
+  .crest-arsenal   { background: #EF0107; }
+  .crest-mancity   { background: #97C1E7; color: #000 !important; }
+
+  /* Annotation block */
+  .annotation-block {
+    background: #080c18;
+    border-top: 2px solid #1e2d5a;
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #5a6a9a;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ STATUS BAR ══════════════════════════════════════════ -->
+<div class="status-bar">
+  <span class="time">9:41</span>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="6" width="3" height="6" fill="#E6EDF3"/><rect x="4.5" y="4" width="3" height="8" fill="#E6EDF3"/><rect x="9" y="2" width="3" height="10" fill="#E6EDF3"/><rect x="13.5" y="0" width="3" height="12" fill="#E6EDF3"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#E6EDF3" stroke-opacity="0.35"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#E6EDF3"/></svg>
+  </div>
+</div>
+
+<!-- ══ NAV BAR ══════════════════════════════════════════════ -->
+<div class="nav-bar">
+  <div class="back-btn">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Scores
+  </div>
+  <span class="nav-title">Premier League</span>
+  <div class="nav-action" title="Notifications">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  </div>
+  <div class="nav-action" title="Share">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+  </div>
+</div>
+
+<!-- ══ MATCH HERO ══════════════════════════════════════════ -->
+<div class="match-hero">
+
+  <!-- Competition -->
+  <div class="match-competition">
+    <div class="comp-flag"></div>
+    <span class="comp-name">Premier League</span>
+    <span class="comp-round" style="margin-left:4px;">· GW 27</span>
+  </div>
+
+  <!-- Score -->
+  <div class="score-block">
+    <div class="team-col">
+      <div class="team-crest-lg crest-arsenal">ARS</div>
+      <div class="team-name-lg">Arsenal</div>
+    </div>
+
+    <div class="score-center">
+      <div class="score-display">
+        <span style="color:#E6EDF3;">2</span>
+        <span class="score-sep">:</span>
+        <span style="color:#8B949E;">1</span>
+      </div>
+      <div class="live-status">
+        <div class="live-dot"></div>
+        <span class="live-time">67'</span>
+      </div>
+    </div>
+
+    <div class="team-col">
+      <div class="team-crest-lg crest-mancity">MC</div>
+      <div class="team-name-lg">Man City</div>
+    </div>
+  </div>
+
+  <!-- Scorers -->
+  <div class="goal-scorers">
+    <div class="scorer-list home">
+      Saka <span>23'</span><br>
+      Martinelli <span>58'</span>
+    </div>
+    <div class="scorer-list away">
+      Haaland <span>41'</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ TAB STRIP ══════════════════════════════════════════ -->
+<div class="tab-strip">
+  <div class="tab-strip-item active">Events</div>
+  <div class="tab-strip-item">Lineups</div>
+  <div class="tab-strip-item">Stats</div>
+  <div class="tab-strip-item">H2H</div>
+  <div class="tab-strip-item">Odds</div>
+</div>
+
+<!-- ══ CONTENT: EVENTS TAB ═══════════════════════════════ -->
+<div class="content-area">
+
+  <div class="section-label">Match Events</div>
+
+  <div class="timeline">
+
+    <!-- 8' - Saka yellow -->
+    <div class="timeline-event">
+      <div class="event-home" style="padding-top:8px;padding-bottom:8px;">
+        <div class="event-player">Saka <span class="event-icon yellow">YC</span></div>
+        <div class="event-type-label">Yellow Card</div>
+      </div>
+      <span class="event-minute">8'</span>
+      <div class="event-away"></div>
+    </div>
+
+    <!-- 23' - Saka Goal -->
+    <div class="timeline-event" style="background:rgba(0,200,83,0.06);border-radius:4px;">
+      <div class="event-home" style="padding-top:10px;padding-bottom:10px;">
+        <div class="event-player" style="color:var(--accent-live);font-weight:600;">Saka <span class="event-icon goal">G</span></div>
+        <div class="event-type-label">Goal · Assist: Ødegaard</div>
+      </div>
+      <span class="event-minute" style="color:var(--accent-live);background:rgba(0,200,83,0.12);">23'</span>
+      <div class="event-away"></div>
+    </div>
+
+    <!-- 38' - Rodri yellow (Man City) -->
+    <div class="timeline-event">
+      <div class="event-home"></div>
+      <span class="event-minute">38'</span>
+      <div class="event-away" style="padding-top:8px;padding-bottom:8px;">
+        <div class="event-player"><span class="event-icon yellow">YC</span> Rodri</div>
+        <div class="event-type-label">Yellow Card</div>
+      </div>
+    </div>
+
+    <!-- 41' - Haaland Goal (Man City) -->
+    <div class="timeline-event" style="background:rgba(33,150,243,0.06);border-radius:4px;">
+      <div class="event-home"></div>
+      <span class="event-minute" style="color:var(--accent-blue);background:rgba(33,150,243,0.12);">41'</span>
+      <div class="event-away" style="padding-top:10px;padding-bottom:10px;">
+        <div class="event-player" style="color:var(--accent-blue);font-weight:600;"><span class="event-icon" style="background:#2196F3;color:#fff;">G</span> Haaland</div>
+        <div class="event-type-label">Goal · Assist: De Bruyne</div>
+      </div>
+    </div>
+
+    <!-- HT divider -->
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;margin:4px 0;">
+      <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
+      <span style="font-size:10px;font-weight:600;color:var(--text-muted);padding:3px 8px;background:var(--bg-surface);border-radius:10px;border:1px solid var(--border-subtle);">HALF TIME</span>
+      <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
+    </div>
+
+    <!-- 58' - Martinelli Goal -->
+    <div class="timeline-event" style="background:rgba(0,200,83,0.06);border-radius:4px;">
+      <div class="event-home" style="padding-top:10px;padding-bottom:10px;">
+        <div class="event-player" style="color:var(--accent-live);font-weight:600;">Martinelli <span class="event-icon goal">G</span></div>
+        <div class="event-type-label">Goal · Assist: White</div>
+      </div>
+      <span class="event-minute" style="color:var(--accent-live);background:rgba(0,200,83,0.12);">58'</span>
+      <div class="event-away"></div>
+    </div>
+
+    <!-- 61' - Sub Arsenal -->
+    <div class="timeline-event">
+      <div class="event-home" style="padding-top:8px;padding-bottom:8px;">
+        <div class="event-player" style="color:var(--text-secondary);">Trossard <span class="event-icon sub">↕</span></div>
+        <div class="event-type-label">Off: Martinelli</div>
+      </div>
+      <span class="event-minute">61'</span>
+      <div class="event-away"></div>
+    </div>
+
+    <!-- 67' - Now Live Marker -->
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;">
+      <div style="flex:1;height:1px;background:var(--accent-live);opacity:0.3;"></div>
+      <span style="font-size:10px;font-weight:600;color:var(--accent-live);padding:3px 8px;background:rgba(0,200,83,0.12);border-radius:10px;border:1px solid rgba(0,200,83,0.3);">● LIVE 67'</span>
+      <div style="flex:1;height:1px;background:var(--accent-live);opacity:0.3;"></div>
+    </div>
+
+    <!-- Pending events placeholder -->
+    <div style="height:40px;"></div>
+
+  </div><!-- /timeline -->
+
+  <!-- ── STATS PREVIEW (collapsed / below timeline) ─────── -->
+  <div class="section-label" style="margin-top:16px;">First Half Stats</div>
+  <div class="stats-section">
+
+    <!-- Possession -->
+    <div class="stat-row">
+      <span class="stat-val">55%</span>
+      <div class="stat-row-inner">
+        <div class="stat-bar-wrap">
+          <div class="stat-bar-home" style="--home-pct:55;"></div>
+          <div class="stat-bar-away" style="--away-pct:45;"></div>
+        </div>
+        <div class="stat-name">Possession</div>
+      </div>
+      <span class="stat-val">45%</span>
+    </div>
+
+    <!-- Shots on target -->
+    <div class="stat-row">
+      <span class="stat-val">4</span>
+      <div class="stat-row-inner">
+        <div class="stat-bar-wrap">
+          <div class="stat-bar-home" style="--home-pct:57;"></div>
+          <div class="stat-bar-away" style="--away-pct:43;"></div>
+        </div>
+        <div class="stat-name">Shots on Target</div>
+      </div>
+      <span class="stat-val">3</span>
+    </div>
+
+    <!-- xG -->
+    <div class="stat-row">
+      <span class="stat-val">1.8</span>
+      <div class="stat-row-inner">
+        <div class="stat-bar-wrap">
+          <div class="stat-bar-home" style="--home-pct:60;"></div>
+          <div class="stat-bar-away" style="--away-pct:40;"></div>
+        </div>
+        <div class="stat-name">xG</div>
+      </div>
+      <span class="stat-val">1.2</span>
+    </div>
+
+    <!-- Corners -->
+    <div class="stat-row">
+      <span class="stat-val">5</span>
+      <div class="stat-row-inner">
+        <div class="stat-bar-wrap">
+          <div class="stat-bar-home" style="--home-pct:63;"></div>
+          <div class="stat-bar-away" style="--away-pct:37;"></div>
+        </div>
+        <div class="stat-name">Corners</div>
+      </div>
+      <span class="stat-val">3</span>
+    </div>
+
+    <!-- Fouls -->
+    <div class="stat-row">
+      <span class="stat-val">6</span>
+      <div class="stat-row-inner">
+        <div class="stat-bar-wrap">
+          <div class="stat-bar-home" style="--home-pct:40;"></div>
+          <div class="stat-bar-away" style="--away-pct:60;"></div>
+        </div>
+        <div class="stat-name">Fouls</div>
+      </div>
+      <span class="stat-val">9</span>
+    </div>
+
+  </div><!-- /stats-section -->
+
+  <!-- ── LINEUPS PREVIEW ──────────────────────────────────── -->
+  <div class="section-label" style="margin-top:16px;">Starting Lineups</div>
+  <div style="padding:0 16px;display:flex;justify-content:space-between;margin-bottom:8px;">
+    <span style="font-size:12px;color:var(--text-secondary);">Arsenal <strong style="color:var(--text-primary);">4-3-3</strong></span>
+    <span style="font-size:12px;color:var(--text-secondary);">Man City <strong style="color:var(--text-primary);">4-2-3-1</strong></span>
+  </div>
+
+  <div class="lineup-section">
+    <div class="pitch">
+      <div class="pitch-centre-circle"></div>
+
+      <!-- Arsenal (home, top) -->
+      <!-- FWD -->
+      <div class="formation-row" style="margin-bottom:14px;">
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:9px;">SAK<br><span style="font-size:7px;opacity:0.7;">7</span></div>
+          <div class="player-name-dot">Saka</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:9px;">HAV<br><span style="font-size:7px;opacity:0.7;">29</span></div>
+          <div class="player-name-dot">Havertz</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:9px;">MAR<br><span style="font-size:7px;opacity:0.7;">11</span></div>
+          <div class="player-name-dot">Martinelli</div>
+        </div>
+      </div>
+      <!-- MID -->
+      <div class="formation-row" style="margin-bottom:14px;">
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:9px;">PAR<br><span style="font-size:7px;opacity:0.7;">23</span></div>
+          <div class="player-name-dot">Partey</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:9px;">ØDE<br><span style="font-size:7px;opacity:0.7;">8</span></div>
+          <div class="player-name-dot">Ødegaard</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:9px;">RIC<br><span style="font-size:7px;opacity:0.7;">41</span></div>
+          <div class="player-name-dot">Rice</div>
+        </div>
+      </div>
+      <!-- DEF -->
+      <div class="formation-row" style="margin-bottom:6px;">
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:8px;">ZIN<br>12</div>
+          <div class="player-name-dot">Zinchenko</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:8px;">SAL<br>6</div>
+          <div class="player-name-dot">Saliba</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:8px;">GAB<br>6</div>
+          <div class="player-name-dot">Gabriel</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle home" style="font-size:8px;">WHI<br>2</div>
+          <div class="player-name-dot">White</div>
+        </div>
+      </div>
+      <!-- GK Arsenal -->
+      <div class="formation-row" style="margin-bottom:20px;">
+        <div class="player-dot">
+          <div class="player-circle gk" style="font-size:8px;">RAM<br>1</div>
+          <div class="player-name-dot">Raya</div>
+        </div>
+      </div>
+
+      <!-- Divider (centre) -->
+
+      <!-- GK Man City -->
+      <div class="formation-row" style="margin-top:10px;">
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">ORT<br>31</div>
+          <div class="player-name-dot">Ederson</div>
+        </div>
+      </div>
+      <!-- DEF Man City -->
+      <div class="formation-row" style="margin-top:14px;">
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">LWI<br>21</div>
+          <div class="player-name-dot">Lewis</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">AKA<br>5</div>
+          <div class="player-name-dot">Akanji</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">RUB<br>14</div>
+          <div class="player-name-dot">Rúben</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">GVA<br>3</div>
+          <div class="player-name-dot">Gvardiol</div>
+        </div>
+      </div>
+      <!-- MID Man City -->
+      <div class="formation-row" style="margin-top:14px;">
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">ROD<br>16</div>
+          <div class="player-name-dot">Rodri</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">KDB<br>17</div>
+          <div class="player-name-dot">De Bruyne</div>
+        </div>
+      </div>
+      <!-- ATT Man City -->
+      <div class="formation-row" style="margin-top:14px;">
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">DOK<br>10</div>
+          <div class="player-name-dot">Doku</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">GUN<br>11</div>
+          <div class="player-name-dot">Gündogan</div>
+        </div>
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">SAV<br>25</div>
+          <div class="player-name-dot">Savinho</div>
+        </div>
+      </div>
+      <!-- ST Man City -->
+      <div class="formation-row" style="margin-top:14px;">
+        <div class="player-dot">
+          <div class="player-circle away" style="font-size:8px;">HAA<br>9</div>
+          <div class="player-name-dot">Haaland</div>
+        </div>
+      </div>
+
+    </div><!-- /pitch -->
+
+    <!-- Bench -->
+    <div class="bench-list">
+      <div class="bench-header">Substitutes</div>
+      <div class="bench-row">
+        <span class="bench-num">13</span>
+        <span class="bench-name">Ramsdale</span>
+        <span class="bench-pos">GK</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-num">35</span>
+        <span class="bench-name">Trossard <span class="sub-in">↑ 61'</span></span>
+        <span class="bench-pos">MF</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-num">28</span>
+        <span class="bench-name">Nketiah</span>
+        <span class="bench-pos">FW</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-num">16</span>
+        <span class="bench-name">Jorginho</span>
+        <span class="bench-pos">MF</span>
+      </div>
+    </div>
+
+  </div><!-- /lineup-section -->
+
+</div><!-- /content-area -->
+
+<!-- ══ BOTTOM TABS ════════════════════════════════════════ -->
+<div class="bottom-tabs">
+  <div class="tab-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <span class="tab-label">Scores</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="tab-label">Fixtures</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="tab-label">Standings</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span class="tab-label">Favorites</span>
+  </div>
+  <div class="tab-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="tab-label">Settings</span>
+  </div>
+</div>
+
+<!-- ══ ANNOTATIONS ════════════════════════════════════════ -->
+<div class="annotation-block">
+  <div style="color:#7b8cde;font-size:13px;font-weight:600;margin-bottom:12px;">Wireframe: Match Detail – Key Patterns</div>
+  <div>● <strong style="color:#9db4f0">Hero score</strong>: 48px Roboto Mono, centered, live pulse badge below</div>
+  <div>● <strong style="color:#9db4f0">Tab strip</strong>: Events / Lineups / Stats / H2H / Odds — sticky below nav</div>
+  <div>● <strong style="color:#9db4f0">Timeline</strong>: centred divider line, home events left, away right</div>
+  <div>● <strong style="color:#9db4f0">Goal events</strong>: green (#00C853) tint row, blue for away goals</div>
+  <div>● <strong style="color:#9db4f0">LIVE NOW marker</strong>: pulsing green divider line at current minute</div>
+  <div>● <strong style="color:#9db4f0">Pitch viz</strong>: dark green gradient, team colors for player dots</div>
+  <div>● <strong style="color:#9db4f0">Stat bars</strong>: proportional fill, blue=home, gray=away, mono values</div>
+  <div>● <strong style="color:#9db4f0">Notification bell</strong>: tap to subscribe to goal alerts for this match</div>
+  <div>● <strong style="color:#9db4f0">Sub indicator</strong>: ↑ minute in green on bench list row</div>
+  <div style="margin-top:10px;color:#3d4f7c;">Tab: Events is default on navigation. Real-time updates via WebSocket refresh.</div>
+</div>
+
+</body>
+</html>
