@@ -47,6 +47,15 @@ export default function RootLayout() {
               animation: 'slide_from_right',
             }}
           />
+          {/* Global search — full-screen push */}
+          <Stack.Screen
+            name="search"
+            options={{
+              headerShown: false,
+              presentation: 'card',
+              animation: 'slide_from_right',
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>

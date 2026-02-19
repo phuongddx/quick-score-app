@@ -10,7 +10,7 @@ interface Props {
 // Two-letter weekday abbreviations indexed by getDay() (0=Sunday)
 const WEEKDAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const;
 const CELL_WIDTH = 52;
-const ACTIVE_COLOR = '#E53935';
+const ACTIVE_COLOR = '#F97316';
 const INACTIVE_COLOR = '#8B949E';
 
 function addDays(base: Date, n: number): Date {

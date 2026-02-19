@@ -11,6 +11,7 @@ import { CompetitionHeader } from '@/components/competition-header';
 import { DateFilterStrip } from '@/components/date-filter-strip';
 import { LoadingSkeleton } from '@/components/loading-skeleton';
 import { EmptyState } from '@/components/empty-state';
+import { TitleBar } from '@/components/title-bar';
 
 interface Section {
   title: string;
@@ -46,7 +47,7 @@ export default function ScoresScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D1117' }} edges={['top']}>
-      {/* Date strip */}
+      <TitleBar onSearchPress={() => router.push('/search' as never)} />
       <DateFilterStrip selectedDate={selectedDate} onDateChange={setDate} />
 
       {isPending ? (
