@@ -26,6 +26,8 @@ Quick Score is a React Native football live score app (Expo 52+ managed workflow
 ```
 app/
 ├── _layout.tsx                    # Root: QueryClientProvider, StatusBar
+├── pro-plans.tsx                  # Pro Plans paywall: yearly/monthly, social proof, FOMO
+├── pro-upgrade.tsx                # Pro Upgrade paywall: full feature list, 7-day trial CTA
 ├── (tabs)/
 │   ├── _layout.tsx                # 5-tab navigation + live match badge
 │   ├── index.tsx                  # Scores: live matches grouped by league
@@ -37,7 +39,7 @@ app/
     └── [id].tsx                   # Match Detail: ScoreBoard + 4 tabs
 
 src/
-├── components/                    # 14 reusable components
+├── components/                    # 24 reusable components
 │   ├── match-card.tsx             # Live match display (tested)
 │   ├── score-board.tsx            # Match detail header
 │   ├── standings-table.tsx        # League table (tested)
@@ -47,11 +49,23 @@ src/
 │   ├── live-indicator.tsx         # Pulsing LIVE badge (tested)
 │   ├── fixture-item.tsx           # Upcoming match preview
 │   ├── date-filter-strip.tsx      # Date navigation
+│   ├── calendar-picker-modal.tsx  # Modal calendar for date selection
 │   ├── competition-header.tsx     # League title bar
 │   ├── team-crest.tsx             # Optimized logo rendering
 │   ├── stat-bar.tsx               # Horizontal stat display
+│   ├── title-bar.tsx              # Global header with branding
 │   ├── loading-skeleton.tsx       # Placeholder animation
 │   ├── empty-state.tsx            # No data UI
+│   ├── settings/
+│   │   ├── settings-row.tsx       # Generic row with toggle/value/chevron
+│   │   ├── settings-section-header.tsx  # Muted all-caps section title
+│   │   ├── settings-profile-card.tsx    # Profile card with avatar
+│   │   ├── settings-api-usage-bar.tsx   # API usage indicator
+│   │   ├── settings-premium-banner.tsx  # Pro upgrade banner
+│   │   └── settings-sign-in-card.tsx    # Auth prompt card
+│   ├── pro/
+│   │   ├── live-teaser-card.tsx   # FOMO teaser for locked live matches
+│   │   └── testimonial-strip.tsx  # Social proof with user quote
 │   └── index.ts                   # Barrel export
 ├── hooks/                         # 6 TanStack Query hooks
 │   ├── use-live-matches.ts        # Live matches, 5s poll (tested)
@@ -164,6 +178,55 @@ Zustand favorites-store
      - Lineups: formations with player positions
      - Stats: possession, shots, passes, etc.
      - H2H: head-to-head history
+
+7. **Pro Plans** - Paywall screen (`/pro-plans`)
+   - Plan selection: Yearly (default, highlighted) vs Monthly
+   - FOMO element: LiveTeaserCard with locked match scores
+   - Social proof: "50,000+ fans already Pro" badge
+   - Feature list: 4 key Pro benefits with staggered animations
+   - Testimonial strip: User quote with star rating
+   - CTA: "Start 7-Day Free Trial"
+
+8. **Pro Upgrade** - Full paywall screen (`/pro-upgrade`)
+   - Extended feature list: 7 Pro features with detailed descriptions
+   - Plan stack: 3 tiers (Yearly, Monthly, Weekly) with "BEST VALUE" badge
+   - Anchoring bias: Yearly plan listed first, 50% savings emphasized
+   - CTA pulse animation: Continuous glow to draw attention
+   - Sticky bottom CTA with legal links (Privacy, Terms, Restore)
+
+## Paywall Conversion UX Patterns
+
+### Anchoring Bias
+- Yearly plan shown first (highest perceived value)
+- "Save 50% vs monthly" text creates reference point
+- Per-month pricing displayed ($3.33/mo vs $4.99/mo)
+
+### Social Proof
+- "50,000+ fans already Pro" green pill badge
+- 4.9 star rating with "12K ratings"
+- TestimonialStrip component with real user quote
+
+### FOMO (Fear of Missing Out)
+- LiveTeaserCard: Shows 3 locked live matches with pulsing "LIVE NOW" indicator
+- "22 matches in progress" creates urgency
+- Lock icons on scores reinforce premium value
+
+### Staggered Animations
+- Trophy icon: Spring entrance on mount (tension: 60, friction: 8)
+- Feature rows: 55-50ms stagger, slide from left (-12px → 0)
+- CTA button: Continuous pulse loop (1.4s intervals, 1.022x scale)
+
+### Design Tokens (Paywall)
+```
+GOLD: #FBBF24 (primary accent)
+GOLD_DIM: rgba(251,191,36,0.12) (backgrounds)
+BG: #0D1117 or #000000 (dark base)
+SURFACE: #161B22 or #0D1117 (cards)
+BORDER: #30363D
+TEXT_PRIMARY: #E6EDF3
+TEXT_SECONDARY: #8B949E
+GREEN_ACCENT: #00C853 (social proof, savings)
+```
 
 ## Performance Targets (Achieved)
 - **Live score latency:** ~5s (mock service interval)

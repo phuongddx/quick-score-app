@@ -15,7 +15,6 @@ import { router } from 'expo-router';
 import {
   X,
   Check,
-  Zap,
   Bell,
   BarChart2,
   Users,
@@ -23,36 +22,41 @@ import {
   Star,
   Shield,
   ChevronRight,
+  Trophy,
+  Zap,
 } from 'lucide-react-native';
+import { LiveTeaserCard } from '@/components/pro/live-teaser-card';
+import { TestimonialStrip } from '@/components/pro/testimonial-strip';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-// ─── Pricing plans ───────────────────────────────────────────────────────────
+// ─── Pricing plans — yearly first for anchoring bias ─────────────────────────
 type PlanId = 'weekly' | 'monthly' | 'yearly';
 
 interface Plan {
   id: PlanId;
   label: string;
   price: string;
+  period: string;
   perMonth: string;
   badge?: string;
   savings?: string;
 }
 
 const PLANS: Plan[] = [
-  { id: 'weekly', label: 'Weekly', price: '$2.99', perMonth: '$11.96/mo' },
-  { id: 'monthly', label: 'Monthly', price: '$4.99', perMonth: '$4.99/mo' },
   {
     id: 'yearly',
     label: 'Yearly',
     price: '$39.99',
+    period: '/year',
     perMonth: '$3.33/mo',
     badge: 'BEST VALUE',
-    savings: 'Save 50%',
+    savings: 'Save 50% vs monthly',
   },
+  { id: 'monthly', label: 'Monthly', price: '$4.99', period: '/month', perMonth: '$4.99/mo' },
+  { id: 'weekly', label: 'Weekly', price: '$2.99', period: '/week', perMonth: '$11.96/mo' },
 ];
 
-// ─── Pro features list ────────────────────────────────────────────────────────
 const PRO_FEATURES = [
   { icon: Zap, label: 'Ad-free experience', sub: 'Zero interruptions, pure football' },
   { icon: Bell, label: 'Live match alerts', sub: 'Goals, cards, final whistle instantly' },
@@ -63,31 +67,48 @@ const PRO_FEATURES = [
   { icon: Shield, label: 'All leagues & competitions', sub: 'Unlock 500+ leagues worldwide' },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function ProUpgradeScreen() {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly');
   const [isPurchasing, setIsPurchasing] = useState(false);
 
-  // Glow pulse animation on the CTA button
+  // CTA button glow pulse
   const glowAnim = useRef(new Animated.Value(0)).current;
-  // Shimmer on the "PRO" badge
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  // Trophy icon bounce on mount
+  const heroScaleAnim = useRef(new Animated.Value(0.7)).current;
+  // Staggered feature row entrance
+  const featureAnims = useRef(PRO_FEATURES.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
+    // Trophy entrance bounce
+    Animated.spring(heroScaleAnim, {
+      toValue: 1,
+      tension: 60,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+
+    // CTA pulse loop
     Animated.loop(
       Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 1400, useNativeDriver: true }),
       ]),
     ).start();
 
-    Animated.loop(
-      Animated.timing(shimmerAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
-    ).start();
+    // Staggered feature rows — start after hero settles
+    const timer = setTimeout(() => {
+      Animated.stagger(
+        55,
+        featureAnims.map((anim) =>
+          Animated.timing(anim, { toValue: 1, duration: 260, useNativeDriver: true }),
+        ),
+      ).start();
+    }, 350);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  const ctaScale = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] });
-
+  const ctaScale = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.022] });
   const activePlan = PLANS.find((p) => p.id === selectedPlan)!;
 
   const handlePurchase = () => {
@@ -100,13 +121,12 @@ export default function ProUpgradeScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
 
-      {/* Atmospheric gradient background via nested Views */}
-      <View style={styles.bgGradientTop} />
-      <View style={styles.bgGradientGold} />
-      <View style={styles.bgGradientBlue} />
+      {/* Atmospheric glow layers */}
+      <View style={styles.bgBase} />
+      <View style={styles.bgGlowGold} />
+      <View style={styles.bgGlowBlue} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        {/* ── Close button ── */}
         <TouchableOpacity
           style={styles.closeBtn}
           onPress={() => router.back()}
@@ -123,25 +143,22 @@ export default function ProUpgradeScreen() {
         >
           {/* ── Hero ── */}
           <View style={styles.heroSection}>
-            {/* Crown icon with glow ring */}
-            <View style={styles.crownRing}>
-              <View style={styles.crownInner}>
-                <Text style={styles.crownEmoji}>⚡</Text>
+            <Animated.View style={[styles.trophyRing, { transform: [{ scale: heroScaleAnim }] }]}>
+              <View style={styles.trophyInner}>
+                <Trophy size={30} color="#FBBF24" />
               </View>
-            </View>
+            </Animated.View>
 
-            {/* Social proof pill */}
             <View style={styles.socialProofPill}>
               <View style={styles.socialDot} />
               <Text style={styles.socialProofText}>50,000+ fans already Pro</Text>
             </View>
 
-            <Text style={styles.heroTitle}>Unlock the Full{'\n'}Match Experience</Text>
+            <Text style={styles.heroTitle}>Miss Nothing.{'\n'}Watch Everything.</Text>
             <Text style={styles.heroSub}>
-              Everything football, nothing holding you back.
+              Live scores, advanced stats & alerts — all in one place.
             </Text>
 
-            {/* Star rating */}
             <View style={styles.ratingRow}>
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star key={s} size={14} color="#FBBF24" fill="#FBBF24" />
@@ -150,34 +167,54 @@ export default function ProUpgradeScreen() {
             </View>
           </View>
 
-          {/* ── Feature list ── */}
+          {/* ── Live FOMO teaser ── */}
+          <LiveTeaserCard />
+
+          {/* ── Feature list with staggered entrance ── */}
           <View style={styles.featureCard}>
             <Text style={styles.featureCardTitle}>WHAT YOU UNLOCK</Text>
-            {PRO_FEATURES.map(({ icon: Icon, label, sub }) => (
-              <View key={label} style={styles.featureRow}>
-                <View style={styles.featureCheckCircle}>
-                  <Check size={12} color="#0D1117" strokeWidth={3} />
-                </View>
-                <View style={styles.featureTextWrap}>
-                  <Text style={styles.featureLabel}>{label}</Text>
-                  <Text style={styles.featureSub}>{sub}</Text>
-                </View>
-                <Icon size={16} color="#FBBF24" />
-              </View>
-            ))}
+            {PRO_FEATURES.map(({ icon: Icon, label, sub }, i) => {
+              const opacity = featureAnims[i];
+              const translateX = featureAnims[i].interpolate({
+                inputRange: [0, 1],
+                outputRange: [-12, 0],
+              });
+              return (
+                <Animated.View
+                  key={label}
+                  style={[styles.featureRow, { opacity, transform: [{ translateX }] }]}
+                >
+                  <View style={styles.featureCheckCircle}>
+                    <Check size={12} color="#0D1117" strokeWidth={3} />
+                  </View>
+                  <View style={styles.featureTextWrap}>
+                    <Text style={styles.featureLabel}>{label}</Text>
+                    <Text style={styles.featureSub}>{sub}</Text>
+                  </View>
+                  <Icon size={16} color="#FBBF24" />
+                </Animated.View>
+              );
+            })}
           </View>
 
-          {/* ── Pricing selector ── */}
+          {/* ── Testimonial ── */}
+          <TestimonialStrip />
+
+          {/* ── Pricing selector — vertical stack ── */}
           <View style={styles.pricingSection}>
             <Text style={styles.pricingSectionTitle}>CHOOSE YOUR PLAN</Text>
-
-            <View style={styles.planRow}>
+            <View style={styles.planStack}>
               {PLANS.map((plan) => {
                 const active = plan.id === selectedPlan;
+                const isHighlighted = plan.id === 'yearly';
                 return (
                   <TouchableOpacity
                     key={plan.id}
-                    style={[styles.planCard, active && styles.planCardActive]}
+                    style={[
+                      styles.planCard,
+                      active && styles.planCardActive,
+                      isHighlighted && !active && styles.planCardHighlighted,
+                    ]}
                     onPress={() => setSelectedPlan(plan.id)}
                     activeOpacity={0.8}
                   >
@@ -186,29 +223,36 @@ export default function ProUpgradeScreen() {
                         <Text style={styles.planBadgeText}>{plan.badge}</Text>
                       </View>
                     )}
-                    <Text style={[styles.planLabel, active && styles.planLabelActive]}>
-                      {plan.label}
-                    </Text>
-                    <Text style={[styles.planPrice, active && styles.planPriceActive]}>
-                      {plan.price}
-                    </Text>
-                    <Text style={[styles.planPerMonth, active && styles.planPerMonthActive]}>
-                      {plan.perMonth}
-                    </Text>
-                    {plan.savings && (
-                      <Text style={styles.planSavings}>{plan.savings}</Text>
-                    )}
+                    <View style={styles.planLeft}>
+                      <Text style={[styles.planLabel, active && styles.planLabelActive]}>
+                        {plan.label}
+                      </Text>
+                      {plan.savings && (
+                        <Text style={styles.planSavings}>{plan.savings}</Text>
+                      )}
+                    </View>
+                    <View style={styles.planRight}>
+                      <View style={styles.planPriceRow}>
+                        <Text style={[styles.planPrice, active && styles.planPriceActive]}>
+                          {plan.price}
+                        </Text>
+                        <Text style={styles.planPeriod}>{plan.period}</Text>
+                      </View>
+                      <Text style={styles.planPerMonth}>{plan.perMonth}</Text>
+                    </View>
+                    <View style={[styles.planRadio, active && styles.planRadioActive]}>
+                      {active && <View style={styles.planRadioDot} />}
+                    </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
           </View>
 
-          {/* ── Spacer for CTA ── */}
-          <View style={{ height: 120 }} />
+          <View style={{ height: 130 }} />
         </ScrollView>
 
-        {/* ── Sticky CTA area ── */}
+        {/* ── Sticky CTA ── */}
         <View style={styles.ctaArea}>
           <Animated.View style={{ transform: [{ scale: ctaScale }] }}>
             <TouchableOpacity
@@ -231,7 +275,7 @@ export default function ProUpgradeScreen() {
           </Animated.View>
 
           <Text style={styles.ctaDisclaimer}>
-            Then {activePlan.price}/{activePlan.label.toLowerCase()} · Cancel anytime
+            Then {activePlan.price}{activePlan.period} · Cancel anytime
           </Text>
 
           <View style={styles.ctaLinksRow}>
@@ -253,53 +297,41 @@ export default function ProUpgradeScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Design tokens ─────────────────────────────────────────────────────────
 const GOLD = '#FBBF24';
 const GOLD_DIM = 'rgba(251,191,36,0.12)';
 const GOLD_BORDER = 'rgba(251,191,36,0.35)';
 const BG = '#0D1117';
 const SURFACE = '#161B22';
-const SURFACE_ALT = '#1C2128';
 const BORDER = '#30363D';
 const TEXT_PRIMARY = '#E6EDF3';
 const TEXT_SECONDARY = '#8B949E';
-const BLUE = '#2196F3';
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: BG,
-  },
+  root: { flex: 1, backgroundColor: BG },
 
-  // Atmospheric background layers
-  bgGradientTop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: BG,
-  },
-  bgGradientGold: {
+  bgBase: { ...StyleSheet.absoluteFillObject, backgroundColor: BG },
+  bgGlowGold: {
     position: 'absolute',
-    top: -60,
-    left: SCREEN_W / 2 - 120,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    top: -80,
+    left: SCREEN_W / 2 - 130,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
     backgroundColor: 'rgba(251,191,36,0.07)',
-    // Simulates radial glow
-    transform: [{ scaleY: 0.5 }],
+    transform: [{ scaleY: 0.45 }],
   },
-  bgGradientBlue: {
+  bgGlowBlue: {
     position: 'absolute',
-    bottom: 80,
-    right: -40,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(33,150,243,0.06)',
+    bottom: 60,
+    right: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(33,150,243,0.05)',
   },
 
-  safeArea: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
   closeBtn: {
     position: 'absolute',
     top: Platform.OS === 'android' ? 16 : 12,
@@ -308,23 +340,20 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: SURFACE_ALT,
+    backgroundColor: '#1C2128',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scroll: {
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
+  scroll: { paddingTop: 8, paddingBottom: 16 },
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
+  // ── Hero ────────────────────────────────────────────────────────────────
   heroSection: {
     alignItems: 'center',
     paddingTop: 40,
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
-  crownRing: {
+  trophyRing: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -336,11 +365,11 @@ const styles = StyleSheet.create({
     backgroundColor: GOLD_DIM,
     shadowColor: GOLD,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOpacity: 0.45,
+    shadowRadius: 22,
+    elevation: 10,
   },
-  crownInner: {
+  trophyInner: {
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -348,10 +377,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  crownEmoji: {
-    fontSize: 28,
-  },
-
   socialProofPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -374,14 +399,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
   },
-
   heroTitle: {
     color: TEXT_PRIMARY,
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800',
     textAlign: 'center',
-    lineHeight: 36,
-    letterSpacing: -0.5,
+    lineHeight: 38,
+    letterSpacing: -0.8,
     marginBottom: 10,
   },
   heroSub: {
@@ -391,19 +415,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 14,
   },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  ratingText: {
-    color: TEXT_SECONDARY,
-    fontSize: 13,
-    marginLeft: 6,
-    fontWeight: '500',
-  },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingText: { color: TEXT_SECONDARY, fontSize: 13, marginLeft: 6, fontWeight: '500' },
 
-  // ── Feature card ──────────────────────────────────────────────────────────
+  // ── Features ─────────────────────────────────────────────────────────────
   featureCard: {
     marginHorizontal: 16,
     backgroundColor: SURFACE,
@@ -437,26 +452,12 @@ const styles = StyleSheet.create({
     marginRight: 14,
     flexShrink: 0,
   },
-  featureTextWrap: {
-    flex: 1,
-  },
-  featureLabel: {
-    color: TEXT_PRIMARY,
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  featureSub: {
-    color: TEXT_SECONDARY,
-    fontSize: 12,
-    lineHeight: 16,
-  },
+  featureTextWrap: { flex: 1 },
+  featureLabel: { color: TEXT_PRIMARY, fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  featureSub: { color: TEXT_SECONDARY, fontSize: 12, lineHeight: 16 },
 
-  // ── Pricing ───────────────────────────────────────────────────────────────
-  pricingSection: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
+  // ── Pricing vertical stack ────────────────────────────────────────────────
+  pricingSection: { marginHorizontal: 16, marginBottom: 8 },
   pricingSectionTitle: {
     color: TEXT_SECONDARY,
     fontSize: 11,
@@ -464,18 +465,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 12,
   },
-  planRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
+  planStack: { gap: 10 },
   planCard: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: SURFACE,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: BORDER,
-    padding: 14,
-    alignItems: 'center',
+    padding: 16,
     overflow: 'visible',
   },
   planCardActive: {
@@ -483,60 +481,46 @@ const styles = StyleSheet.create({
     backgroundColor: GOLD_DIM,
     shadowColor: GOLD,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
     elevation: 6,
+  },
+  planCardHighlighted: {
+    borderColor: 'rgba(251,191,36,0.22)',
   },
   planBadge: {
     position: 'absolute',
     top: -12,
+    left: 16,
     backgroundColor: GOLD,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  planBadgeText: {
-    color: '#0D1117',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+  planBadgeText: { color: '#0D1117', fontSize: 9, fontWeight: '800', letterSpacing: 0.8 },
+  planLeft: { flex: 1 },
+  planLabel: { color: TEXT_SECONDARY, fontSize: 13, fontWeight: '600' },
+  planLabelActive: { color: GOLD },
+  planSavings: { color: '#00C853', fontSize: 12, fontWeight: '600', marginTop: 2 },
+  planRight: { alignItems: 'flex-end', marginRight: 12 },
+  planPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
+  planPrice: { color: TEXT_PRIMARY, fontSize: 20, fontWeight: '800' },
+  planPriceActive: { color: TEXT_PRIMARY },
+  planPeriod: { color: TEXT_SECONDARY, fontSize: 12 },
+  planPerMonth: { color: TEXT_SECONDARY, fontSize: 12, marginTop: 2 },
+  planRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  planLabel: {
-    color: TEXT_SECONDARY,
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 6,
-    letterSpacing: 0.3,
-  },
-  planLabelActive: {
-    color: GOLD,
-  },
-  planPrice: {
-    color: TEXT_PRIMARY,
-    fontSize: 20,
-    fontWeight: '800',
-    marginTop: 4,
-    letterSpacing: -0.5,
-  },
-  planPriceActive: {
-    color: TEXT_PRIMARY,
-  },
-  planPerMonth: {
-    color: TEXT_SECONDARY,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  planPerMonthActive: {
-    color: TEXT_SECONDARY,
-  },
-  planSavings: {
-    color: '#00C853',
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 4,
-  },
+  planRadioActive: { borderColor: GOLD, backgroundColor: GOLD_DIM },
+  planRadioDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: GOLD },
 
-  // ── CTA ───────────────────────────────────────────────────────────────────
+  // ── CTA ──────────────────────────────────────────────────────────────────
   ctaArea: {
     position: 'absolute',
     bottom: 0,
@@ -545,7 +529,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 8 : 20,
-    backgroundColor: 'rgba(13,17,23,0.95)',
+    backgroundColor: 'rgba(13,17,23,0.96)',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: BORDER,
   },
@@ -560,18 +544,11 @@ const styles = StyleSheet.create({
     shadowColor: GOLD,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45,
-    shadowRadius: 16,
+    shadowRadius: 18,
     elevation: 10,
   },
-  ctaBtnDisabled: {
-    opacity: 0.6,
-  },
-  ctaBtnText: {
-    color: '#0D1117',
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
+  ctaBtnDisabled: { opacity: 0.6 },
+  ctaBtnText: { color: '#0D1117', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 },
   ctaDisclaimer: {
     color: TEXT_SECONDARY,
     fontSize: 12,
@@ -586,13 +563,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 4,
   },
-  ctaLink: {
-    color: TEXT_SECONDARY,
-    fontSize: 11,
-    textDecorationLine: 'underline',
-  },
-  ctaLinkSep: {
-    color: TEXT_SECONDARY,
-    fontSize: 11,
-  },
+  ctaLink: { color: TEXT_SECONDARY, fontSize: 11, textDecorationLine: 'underline' },
+  ctaLinkSep: { color: TEXT_SECONDARY, fontSize: 11 },
 });

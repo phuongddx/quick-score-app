@@ -22,6 +22,7 @@ Quick Score is a fully-functional React Native football live score app built wit
 app/
 ├── _layout.tsx           # Root: QueryClientProvider, StatusBar, Stack nav
 ├── pro-plans.tsx         # Pro Plans paywall: yearly/monthly selection, features, CTA
+├── pro-upgrade.tsx       # Pro Upgrade paywall: full feature list, social proof, 7-day trial
 ├── (tabs)/
 │   ├── _layout.tsx       # 5-tab Tabs nav + badge for live match count
 │   ├── index.tsx         # Scores: live matches grouped by league
@@ -33,7 +34,7 @@ app/
     └── [id].tsx          # Match detail: ScoreBoard + 4 tabs
 ```
 
-### `/src/components` - Reusable UI Components (19 total)
+### `/src/components` - Reusable UI Components (24 total)
 | Component | Purpose |
 |-----------|---------|
 | `match-card.tsx` | Live match display with score & status |
@@ -41,22 +42,29 @@ app/
 | `standings-table.tsx` | League table with team rows |
 | `event-timeline.tsx` | Goals, cards, substitutions feed |
 | `lineup-pitch.tsx` | Visual formation diagram |
+| `lineup-pitch-player.tsx` | Individual player dot on pitch |
 | `live-indicator.tsx` | "LIVE" pulsing badge |
 | `fixture-item.tsx` | Upcoming match preview |
 | `date-filter-strip.tsx` | Date navigation for fixtures |
+| `calendar-picker-modal.tsx` | Modal calendar for date selection |
 | `competition-header.tsx` | League/competition title bar |
 | `team-crest.tsx` | Optimized image logo rendering |
 | `stat-bar.tsx` | Horizontal stat bar with % |
+| `title-bar.tsx` | Global header with branding and search |
 | `loading-skeleton.tsx` | Placeholder animations |
 | `empty-state.tsx` | No data fallback UI |
 | `settings/settings-row.tsx` | Generic settings row with toggle/value/chevron |
 | `settings/settings-section-header.tsx` | Muted all-caps section title |
 | `settings/settings-profile-card.tsx` | Profile card with avatar, name, email, badge |
-| `pro/plan-card.tsx` | Radio-selectable plan card (yearly/monthly) with glow shadow |
-| `pro/feature-item.tsx` | Feature row with icon container for paywall |
+| `settings/settings-api-usage-bar.tsx` | API calls usage indicator |
+| `settings/settings-premium-banner.tsx` | Pro upgrade promotional banner |
+| `settings/settings-sign-in-card.tsx` | Auth prompt for anonymous users |
+| `pro/live-teaser-card.tsx` | FOMO teaser showing locked live matches with pulsing dot |
+| `pro/testimonial-strip.tsx` | Social proof with user quote and star rating |
 
-**Pro Components:** 2 new paywall components for subscription modal
-**Settings Components:** 3 modular components for redesigned Settings screen
+**Pro Components:** 2 conversion-optimized paywall components (live-teaser-card, testimonial-strip)
+**Settings Components:** 6 modular components for redesigned Settings screen
+**Global Components:** 2 shared UI components (title-bar, calendar-picker-modal)
 **Test Coverage:** match-card, standings-table, live-indicator tested; 100% pass
 
 ### `/src/hooks` - TanStack Query & Custom Hooks (6 total)
